@@ -14,20 +14,24 @@ type SimpleStruct struct {
 	Name string
 }
 
-func (s SimpleStruct) StructMethod() {
-
+func (s SimpleStruct) Method() {
 }
 
-type PointerSimpleStruct struct {
-	Name string
+func (s SimpleStruct) MethodWithParamAndResult(name string) int {
+	return 0
 }
 
-func (s *PointerSimpleStruct) StructMethod() {
+func (s SimpleStruct) MethodWithParamAndNameResult(name string) (r int) {
+	return
+}
 
+func (s *SimpleStruct) PointerMethod() {
 }
 
 type SimpleInterface interface {
-	InterfaceMethod()
+	Method()
+	MethodWithParamAndResult(name string) int
+	MethodWithParamAndNameResult(name string) (r int)
 }
 
 func SimpleFunc() {

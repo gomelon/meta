@@ -1,0 +1,82 @@
+package meta
+
+import (
+	"os"
+	"testing"
+)
+
+func TestLoad(t *testing.T) {
+	type args struct {
+		loadPackagePaths []string
+		findPackagePath  string
+		findTypeName     string
+	}
+	tests := []struct {
+		name      string
+		args      args
+		wantFound bool
+		wantErr   bool
+	}{
+		{
+			name: "Load",
+			args: args{
+				loadPackagePaths: []string{"github.com/gomelon/meta/internal/testdata"},
+				findPackagePath:  "github.com/gomelon/meta/internal/testdata",
+				findTypeName:     "IntVar",
+			},
+			wantFound: true,
+			wantErr:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			workdir, _ := os.Getwd()
+			packageParser := NewPackageParser(workdir)
+			err := packageParser.Load(tt.args.loadPackagePaths...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			got := packageParser.TypeByPkgPathAndName(tt.args.findPackagePath, tt.args.findTypeName)
+			if (got != nil) != tt.wantFound {
+				t.Errorf("Load() then TypeByPkgPathAndName(%v,%v), want %v",
+					tt.args.findPackagePath, tt.args.findTypeName, tt.wantFound)
+			}
+		})
+	}
+}
+
+func TestPackagesHelper_FindType(t *testing.T) {
+	type args struct {
+		loadPackagePaths []string
+		findPackagePath  string
+		findTypeName     string
+	}
+	tests := []struct {
+		name      string
+		args      args
+		wantFound bool
+	}{
+		{
+			name: "Should Find Import type",
+			args: args{
+				loadPackagePaths: []string{"github.com/gomelon/meta/internal/testdata"},
+				findPackagePath:  "time",
+				findTypeName:     "Time",
+			},
+			wantFound: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			workdir, _ := os.Getwd()
+			packageParser := NewPackageParser(workdir)
+			_ = packageParser.Load(tt.args.loadPackagePaths...)
+			got := packageParser.TypeByPkgPathAndName(tt.args.findPackagePath, tt.args.findTypeName)
+			if (got != nil) != tt.wantFound {
+				t.Errorf("TypeByPkgPathAndName(%v,%v) wantFound %v",
+					tt.args.findPackagePath, tt.args.findTypeName, tt.wantFound)
+			}
+		})
+	}
+}

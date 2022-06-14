@@ -8,8 +8,8 @@ type Table struct {
 	Value string
 }
 
-func (t *Table) Target() meta.Target {
-	return meta.TargetInterface
+func (t *Table) Target() meta.Type {
+	return meta.TypeInterface
 }
 
 func (t *Table) Name() string {
@@ -22,8 +22,8 @@ type Query struct {
 	Omitempty bool
 }
 
-func (q *Query) Target() meta.Target {
-	return meta.TargetInterfaceMethod
+func (q *Query) Target() meta.Type {
+	return meta.TypeInterfaceMethod
 }
 
 func (q *Query) Name() string {
