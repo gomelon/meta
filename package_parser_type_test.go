@@ -2,7 +2,6 @@ package meta
 
 import (
 	"go/types"
-	"os"
 	"testing"
 )
 
@@ -58,8 +57,7 @@ func TestObjectTarget(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		workdir, _ := os.Getwd()
-		packageParser := NewPackageParser(workdir)
+		packageParser := NewPackageParser()
 		_ = packageParser.Load(tt.args.pkgPath)
 		object := packageParser.TypeByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		t.Run(tt.name, func(t *testing.T) {
@@ -90,8 +88,7 @@ func TestObjectTarget_StructField(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		workdir, _ := os.Getwd()
-		packageParser := NewPackageParser(workdir)
+		packageParser := NewPackageParser()
 		_ = packageParser.Load(tt.args.pkgPath)
 		object := packageParser.TypeByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		structObject := object.Type().Underlying().(*types.Struct)
@@ -161,8 +158,7 @@ func TestObjectTarget_StructMethod(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		workdir, _ := os.Getwd()
-		packageParser := NewPackageParser(workdir)
+		packageParser := NewPackageParser()
 		_ = packageParser.Load(tt.args.pkgPath)
 		object := packageParser.TypeByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		namedObject := object.Type().(*types.Named)
@@ -249,8 +245,7 @@ func TestObjectTarget_InterfaceMethod(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		workdir, _ := os.Getwd()
-		packageParser := NewPackageParser(workdir)
+		packageParser := NewPackageParser()
 		_ = packageParser.Load(tt.args.pkgPath)
 		object := packageParser.TypeByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		itf := object.Type().Underlying().(*types.Interface)

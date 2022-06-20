@@ -19,16 +19,14 @@ type PackageParser struct {
 	pkgPathToPath    map[string]string
 	objectToType     sync.Map // key=types.Object,value=Type
 	fileSet          *token.FileSet
-	workdir          string
 }
 
-func NewPackageParser(workdir string) *PackageParser {
+func NewPackageParser() *PackageParser {
 	return &PackageParser{
 		pkgPathToPackage: map[string]*packages.Package{},
 		pathToPkgPath:    map[string]string{},
 		pkgPathToPath:    map[string]string{},
 		fileSet:          token.NewFileSet(),
-		workdir:          workdir,
 	}
 }
 
@@ -37,7 +35,6 @@ func (packageParser *PackageParser) Load(paths ...string) (err error) {
 	cfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles |
 			packages.NeedImports | packages.NeedTypes | packages.NeedSyntax,
-		Dir: packageParser.workdir,
 		//TODO 如果其它地方的代码有依赖生成的文件,但又不加入解析,是否有问题?
 		BuildFlags: []string{"-tags", GeneratedBuildTag},
 		Fset:       packageParser.fileSet,
@@ -78,6 +75,10 @@ func (packageParser *PackageParser) Package(packagePath string) *packages.Packag
 
 func (packageParser *PackageParser) Path(pkgPath string) string {
 	return packageParser.pkgPathToPath[pkgPath]
+}
+
+func (packageParser *PackageParser) PkgPath(path string) string {
+	return packageParser.pathToPkgPath[path]
 }
 
 func (packageParser *PackageParser) TypeByPkgPathAndName(packagePath, typeName string) types.Object {

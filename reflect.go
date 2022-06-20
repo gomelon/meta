@@ -6,8 +6,8 @@ import (
 	"strconv"
 )
 
-func SetValueFromString(v reflect.Value, strVal string) error {
-	switch v.Kind() {
+func setValueFromString(field reflect.StructField, v reflect.Value, strVal string) error {
+	switch field.Type.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		val, err := strconv.ParseInt(strVal, 0, 64)
 		if err != nil {

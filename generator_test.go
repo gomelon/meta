@@ -2,8 +2,8 @@ package meta
 
 import (
 	"fmt"
+	"github.com/antonmedv/expr"
 	"os"
-	"strings"
 	"testing"
 )
 
@@ -24,14 +24,9 @@ var tplText = `
 func TestTemplateGen(t *testing.T) {
 
 	workdir, _ := os.Getwd()
-	pkgPath := "github.com/gomelon/meta/internal/testdata"
+	path := workdir + "/testdata"
 	metas := []Meta{&Table{}}
-	funcMap := map[string]any{
-		"short": func(name string) string {
-			return strings.ToLower(string(name[0]))
-		},
-	}
-	generator, err := NewTemplateGenerator(workdir, pkgPath, metas, tplText, funcMap)
+	generator, err := NewTemplateGenerator(path, tplText, WithMetas(metas))
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -42,4 +37,10 @@ func TestTemplateGen(t *testing.T) {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+}
+
+func TestName(t *testing.T) {
+	program, _ := expr.Compile("1==1")
+	output, _ := expr.Run(program, map[string]any{})
+	fmt.Println(output == true)
 }

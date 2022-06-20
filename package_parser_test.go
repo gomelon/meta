@@ -1,7 +1,6 @@
 package meta
 
 import (
-	"os"
 	"testing"
 )
 
@@ -30,8 +29,7 @@ func TestLoad(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			workdir, _ := os.Getwd()
-			packageParser := NewPackageParser(workdir)
+			packageParser := NewPackageParser()
 			err := packageParser.Load(tt.args.loadPackagePaths...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
@@ -69,8 +67,7 @@ func TestPackagesHelper_FindType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			workdir, _ := os.Getwd()
-			packageParser := NewPackageParser(workdir)
+			packageParser := NewPackageParser()
 			_ = packageParser.Load(tt.args.loadPackagePaths...)
 			got := packageParser.TypeByPkgPathAndName(tt.args.findPackagePath, tt.args.findTypeName)
 			if (got != nil) != tt.wantFound {

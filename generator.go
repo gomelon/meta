@@ -12,48 +12,136 @@ import (
 )
 
 type TemplateGenerator struct {
-	path          string
-	pkgPath       string
-	metas         []Meta
-	importTracker ImportTracker
-	packageParser *PackageParser
-	tpl           *template.Template
+	path            string
+	pkgPath         string
+	metas           []Meta
+	packageParser   *PackageParser
+	metaParser      *MetaParser
+	importTracker   ImportTracker
+	funcMapProvider func(generator *TemplateGenerator) map[string]any
+	tpl             *template.Template
 }
 
-//TODO 这个后续再增加更多的可定制化
-func NewTemplateGenerator(workdir string, pkgPath string, metas []Meta, templateText string,
-	funcMap map[string]any) (*TemplateGenerator, error) {
+type TGOption func(gen *TemplateGenerator)
 
-	packageParser := NewPackageParser(workdir)
-	err := packageParser.Load(pkgPath)
+func WithPackageParser(packageParser *PackageParser) TGOption {
+	return func(gen *TemplateGenerator) {
+		gen.packageParser = packageParser
+	}
+}
+
+func WithMetaParser(metaParser *MetaParser) TGOption {
+	return func(gen *TemplateGenerator) {
+		gen.metaParser = metaParser
+	}
+}
+
+func WithMetas(metas []Meta) TGOption {
+	return func(gen *TemplateGenerator) {
+		gen.metas = metas
+	}
+}
+
+func WithImportTracker(tracker ImportTracker) TGOption {
+	return func(gen *TemplateGenerator) {
+		gen.importTracker = tracker
+	}
+}
+
+func WithFuncMapProvider(provider func(generator *TemplateGenerator) map[string]any) TGOption {
+	return func(gen *TemplateGenerator) {
+		gen.funcMapProvider = provider
+	}
+}
+
+func NewTemplateGenerator(path string, templateText string, options ...TGOption) (gen *TemplateGenerator, err error) {
+
+	gen = &TemplateGenerator{
+		metas: []Meta{},
+		funcMapProvider: func(generator *TemplateGenerator) map[string]any {
+			return map[string]any{}
+		},
+	}
+	gen.path = path
+	for _, option := range options {
+		option(gen)
+	}
+
+	if gen.packageParser == nil {
+		gen.packageParser = NewPackageParser()
+	}
+
+	if gen.metaParser == nil {
+		gen.metaParser = NewMetaParser(gen.packageParser, gen.pkgPath, gen.metas)
+	}
+
+	err = gen.packageParser.Load(path)
 	if err != nil {
 		return nil, err
 	}
-	path := packageParser.Path(pkgPath)
-	importTracker := NewDefaultImportTracker(pkgPath)
-	templateFunc := NewTemplateFunc(importTracker, packageParser, pkgPath, metas)
+	gen.pkgPath = gen.packageParser.PkgPath(path)
+
+	if gen.importTracker == nil {
+		gen.importTracker = NewDefaultImportTracker(gen.pkgPath)
+	}
+
+	functions := newFunctions(gen.packageParser, gen.metaParser, gen.importTracker, gen.pkgPath)
+
 	tpl, err := template.New("TemplateGen").
 		Funcs(sprig.GenericFuncMap()).
-		Funcs(templateFunc.FuncMap()).
-		Funcs(funcMap).
+		Funcs(functions.FuncMap()).
+		Funcs(gen.funcMapProvider(gen)).
 		Parse(templateText)
-	return &TemplateGenerator{
-		path:          path,
-		pkgPath:       pkgPath,
-		metas:         metas,
-		importTracker: importTracker,
-		packageParser: packageParser,
-		tpl:           tpl,
-	}, nil
+
+	if err != nil {
+		return
+	}
+	gen.tpl = tpl
+	return gen, nil
+}
+
+func (gen *TemplateGenerator) Path() string {
+	return gen.path
+}
+
+func (gen *TemplateGenerator) PkgPath() string {
+	return gen.pkgPath
+}
+
+func (gen *TemplateGenerator) PackageParser() *PackageParser {
+	return gen.packageParser
+}
+
+func (gen *TemplateGenerator) MetaParser() *MetaParser {
+	return gen.metaParser
+}
+
+func (gen *TemplateGenerator) ImportTracker() ImportTracker {
+	return gen.importTracker
+}
+
+func (gen *TemplateGenerator) Metas() []Meta {
+	return gen.metas
 }
 
 func (gen *TemplateGenerator) GetMetaNames() []string {
 	metas := gen.metas
 	metaNames := make([]string, 0, len(metas))
 	for _, meta := range metas {
-		metaNames = append(metaNames, meta.Name())
+		metaNames = append(metaNames, meta.Directive())
 	}
 	return metaNames
+}
+
+func (gen *TemplateGenerator) Bytes() ([]byte, error) {
+	buffer := bytes.NewBuffer([]byte{})
+	err := gen.generate(buffer)
+	return buffer.Bytes(), err
+}
+
+func (gen *TemplateGenerator) Write(writer io.Writer) error {
+	err := gen.generate(writer)
+	return err
 }
 
 func (gen *TemplateGenerator) Print() error {
@@ -69,11 +157,12 @@ func (gen *TemplateGenerator) Generate() error {
 	return gen.generate(file)
 }
 
-func (gen *TemplateGenerator) generate(writer io.Writer) error {
+func (gen *TemplateGenerator) generate(writer io.Writer) (err error) {
+
 	bodyBuf := bytes.NewBuffer(make([]byte, 0, 1024))
-	err := gen.tpl.Execute(bodyBuf, map[string]any{})
+	err = gen.tpl.Execute(bodyBuf, map[string]any{})
 	if err != nil {
-		return err
+		return
 	}
 
 	headerBuf := bytes.NewBuffer(make([]byte, 0, 1024))
@@ -88,14 +177,15 @@ func (gen *TemplateGenerator) generate(writer io.Writer) error {
 
 	if err != nil {
 		_, _ = writer.Write(fileBytes)
-		return err
+		return
 	}
 	_, err = writer.Write(fmtFileBytes)
-	return err
+	return
 }
 
 func (gen *TemplateGenerator) outputFile() string {
-	return gen.path + "/x_gen.go"
+	pkg := gen.packageParser.Package(gen.pkgPath)
+	return fmt.Sprintf("%s/%s_gen.go", gen.path, pkg.Name)
 }
 
 func (gen *TemplateGenerator) writerHeader(writer *bytes.Buffer) {

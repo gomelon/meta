@@ -11,7 +11,7 @@ func (t *Table) Target() Type {
 	return TypeInterface
 }
 
-func (t *Table) Name() string {
+func (t *Table) Directive() string {
 	return MetaSqlTable
 }
 
