@@ -106,51 +106,6 @@ func (metaParser *MetaParser) filterComments(pos token.Pos, metaName string) []s
 	return filteredComments
 }
 
-//func (metaParser *MetaParser) populateMetaFields(meta Meta, comment string) (parsedMeta Meta) {
-//	strings.TrimLeft(comment, meta.Directive())
-//	fieldAndValues, err := shlex.Split(comment)
-//	if err != nil {
-//		return
-//	}
-//	typeOfMeta := reflect.Indirect(reflect.ValueOf(meta)).Type()
-//	newMeta := reflect.New(typeOfMeta)
-//	valueOfMeta := reflect.Indirect(newMeta)
-//
-//	//first is meta prefix, must ignore
-//	for _, fieldAndValue := range fieldAndValues[1:] {
-//		parts := strings.SplitN(fieldAndValue, "=", 2)
-//
-//		field, found := typeOfMeta.FieldByNameFunc(func(name string) bool {
-//			fieldName := xstrings.ToCamelCase(parts[0])
-//			return fieldName == name || strings.EqualFold(fieldName, name)
-//		})
-//		if !found {
-//			panic(fmt.Errorf("meta parse: field not found,[meta=%s,field=%s]",
-//				meta.Directive(), parts[0]))
-//		}
-//		if !field.IsExported() {
-//			panic(fmt.Errorf("meta parse: expected exported field but not,[meta=%s,field=%s]",
-//				meta.Directive(), parts[0]))
-//		}
-//		fieldValue := valueOfMeta.FieldByName(field.Name)
-//
-//		if len(parts) == 1 {
-//			if field.Type.Kind() != reflect.Bool {
-//				panic(fmt.Errorf("meta parse: expected bool field but not,[meta=%s,field=%s]",
-//					meta.Directive(), parts[0]))
-//			}
-//			fieldValue.SetBool(true)
-//		} else {
-//			err = setValueFromString(field, fieldValue, parts[1])
-//		}
-//		if err != nil {
-//			log.Fatalf("fail on set meta value, %v", err)
-//		}
-//	}
-//	parsedMeta = newMeta.Interface().(Meta)
-//	return
-//}
-
 func (metaParser *MetaParser) populateMetaFields(meta Meta, comment string) (parsedMeta Meta) {
 	strings.TrimLeft(comment, meta.Directive())
 	fieldAndValues, err := shlex.Split(comment)
