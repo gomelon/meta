@@ -173,6 +173,7 @@ func (gen *TemplateGenerator) generate(writer io.Writer) (err error) {
 	_, _ = fileBuf.ReadFrom(bodyBuf)
 
 	fileBytes := fileBuf.Bytes()
+	//format code and optimize import
 	fmtFileBytes, err := imports.Process(gen.outputFile(), fileBytes, nil)
 
 	if err != nil {

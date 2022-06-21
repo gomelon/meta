@@ -12,21 +12,21 @@ import (
 )
 
 type MetaParser struct {
-	packages                 *PackageParser
+	packageParser            *PackageParser
 	pkg                      *packages.Package
 	pkgPath                  string
 	objectToParsedMetaGroups map[types.Object]map[string]Group
 	metaNameToMeta           map[string]Meta
 }
 
-func NewMetaParser(packages *PackageParser, pkgPath string, metas []Meta) *MetaParser {
+func NewMetaParser(packageParser *PackageParser, pkgPath string, metas []Meta) *MetaParser {
 	metaNameToMeta := make(map[string]Meta, len(metas))
 	for _, meta := range metas {
 		metaNameToMeta[meta.Directive()] = meta
 	}
 	return &MetaParser{
-		packages:                 packages,
-		pkg:                      packages.Package(pkgPath),
+		packageParser:            packageParser,
+		pkg:                      packageParser.Package(pkgPath),
 		pkgPath:                  pkgPath,
 		objectToParsedMetaGroups: map[types.Object]map[string]Group{},
 		metaNameToMeta:           metaNameToMeta,
@@ -66,7 +66,7 @@ func (metaParser *MetaParser) ObjectMetaGroup(object types.Object, metaName stri
 		return
 	}
 
-	objectType := metaParser.packages.ObjectType(object)
+	objectType := metaParser.packageParser.ObjectType(object)
 	if meta.Target()&objectType == 0 {
 		return
 	}
@@ -97,7 +97,7 @@ func (metaParser *MetaParser) ObjectMetaGroup(object types.Object, metaName stri
 
 func (metaParser *MetaParser) filterComments(pos token.Pos, metaName string) []string {
 	var filteredComments []string
-	comments := metaParser.packages.Comments(pos)
+	comments := metaParser.packageParser.Comments(pos)
 	for _, comment := range comments {
 		if strings.HasPrefix(comment, metaName) {
 			filteredComments = append(filteredComments, comment)
@@ -120,7 +120,7 @@ func (metaParser *MetaParser) populateMetaFields(meta Meta, comment string) (par
 	for _, fieldAndValue := range fieldAndValues[1:] {
 		parts := strings.SplitN(fieldAndValue, "=", 2)
 		if len(parts) == 1 {
-			kv[parts[0]] = true
+			kv[parts[0]] = "true"
 		} else {
 			kv[parts[0]] = parts[1]
 		}

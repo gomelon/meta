@@ -120,6 +120,68 @@ func (packageParser *PackageParser) StructMethods(object types.Object) []types.O
 	return methods
 }
 
+func (packageParser *PackageParser) Params(methodOrFunc types.Object) []types.Object {
+	signature, ok := methodOrFunc.Type().(*types.Signature)
+	if !ok {
+		panic(fmt.Errorf("package parser: object isn't a method [object=%s]", methodOrFunc.Name()))
+	}
+	params := signature.Params()
+	length := params.Len()
+	result := make([]types.Object, 0, length)
+
+	for i := 0; i < length; i++ {
+		result = append(result, params.At(i))
+	}
+	return result
+}
+
+func (packageParser *PackageParser) FirstParam(methodOrFunc types.Object) types.Object {
+	params := packageParser.Params(methodOrFunc)
+	if len(params) == 0 {
+		return nil
+	}
+	return params[0]
+}
+
+func (packageParser *PackageParser) Results(methodOrFunc types.Object) []types.Object {
+	signature, ok := methodOrFunc.Type().(*types.Signature)
+	if !ok {
+		panic(fmt.Errorf("package parser: object isn't a method [object=%s]", methodOrFunc.Name()))
+	}
+	params := signature.Results()
+	length := params.Len()
+	result := make([]types.Object, 0, length)
+
+	for i := 0; i < length; i++ {
+		result = append(result, params.At(i))
+	}
+	return result
+}
+
+func (packageParser *PackageParser) FirstResult(methodOrFunc types.Object) types.Object {
+	results := packageParser.Results(methodOrFunc)
+	if len(results) == 0 {
+		return nil
+	}
+	return results[0]
+}
+
+func (packageParser *PackageParser) LastResult(methodOrFunc types.Object) types.Object {
+	results := packageParser.Results(methodOrFunc)
+	if len(results) == 0 {
+		return nil
+	}
+	return results[len(results)-1]
+}
+
+func (packageParser *PackageParser) HasErrorResult(methodOrFunc types.Object) bool {
+	lastResult := packageParser.LastResult(methodOrFunc)
+	if lastResult == nil {
+		return false
+	}
+	return lastResult.Type().String() == "error"
+}
+
 func (packageParser *PackageParser) ObjectType(object types.Object) (objectType Type) {
 	objectTypeValue, ok := packageParser.objectToType.Load(object)
 	if ok {
