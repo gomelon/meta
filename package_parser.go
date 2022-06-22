@@ -182,6 +182,11 @@ func (packageParser *PackageParser) HasErrorResult(methodOrFunc types.Object) bo
 	return lastResult.Type().String() == "error"
 }
 
+func (packageParser *PackageParser) IndirectObject(object types.Object) types.Type {
+	pointer := object.Type().(*types.Pointer)
+	return pointer.Elem().(types.Type)
+}
+
 func (packageParser *PackageParser) ObjectType(object types.Object) (objectType Type) {
 	objectTypeValue, ok := packageParser.objectToType.Load(object)
 	if ok {

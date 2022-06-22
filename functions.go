@@ -53,12 +53,15 @@ func (f *functions) FuncMap() map[string]any {
 		"filterByMethodContainsMeta": f.FilterByMethodContainsMeta,
 		"hasMethodContainsMeta":      f.HasMethodContainsMeta,
 		"filterObjects":              f.FilterObjects,
+		"indirectObject":             f.IndirectObject,
 		"declare":                    f.Declare,
 		"declareType":                f.DeclareType,
+		"typeString":                 f.TypeString,
 		"methodSignature":            f.MethodSignature,
 		"import":                     f.Import,
 		"objectMetaGroups":           f.ObjectMetaGroups,
 		"objectMetaGroup":            f.ObjectMetaGroup,
+		"multipleLines":              f.MultipleLines,
 	}
 }
 
@@ -200,6 +203,10 @@ func (f *functions) FilterObjects(objects []types.Object, filters ...func(types.
 	return result
 }
 
+func (f *functions) IndirectObject(object types.Object) types.Type {
+	return f.packageParser.IndirectObject(object)
+}
+
 func (f *functions) Declare(object types.Object) string {
 	if len(object.Name()) > 0 {
 		return object.Name() + " " + f.DeclareType(object)
@@ -236,9 +243,13 @@ func (f *functions) DeclareType(object types.Object) string {
 
 		return builder.String()
 	case TypeVar, TypeFuncVar:
-		return types.TypeString(object.Type(), f.typeQualifier)
+		return f.TypeString(object.Type())
 	}
 	return ""
+}
+
+func (f *functions) TypeString(typ types.Type) string {
+	return types.TypeString(typ, f.typeQualifier)
 }
 
 func (f *functions) MethodSignature(object types.Object) *types.Signature {
@@ -255,6 +266,10 @@ func (f *functions) ObjectMetaGroups(object types.Object, metaNames ...string) m
 
 func (f *functions) ObjectMetaGroup(object types.Object, metaName string) Group {
 	return f.metaParser.ObjectMetaGroup(object, metaName)
+}
+
+func (f *functions) MultipleLines(linePrefix, lineSuffix, line string) string {
+	return strings.ReplaceAll(line, "\n", lineSuffix+"\"+\n"+linePrefix+"\"")
 }
 
 func (f *functions) filterByType(typ Type) []types.Object {
