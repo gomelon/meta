@@ -7,8 +7,8 @@ type Table struct {
 	Value string
 }
 
-func (t *Table) Target() Type {
-	return TypeInterface
+func (t *Table) PlaceAt() Place {
+	return PlaceInterface
 }
 
 func (t *Table) Directive() string {
@@ -25,8 +25,8 @@ type Query struct {
 	Omitempty bool
 }
 
-func (q *Query) Target() Type {
-	return TypeInterfaceMethod
+func (q *Query) Target() Place {
+	return PlaceInterfaceMethod
 }
 
 func (q *Query) Name() string {

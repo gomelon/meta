@@ -35,7 +35,7 @@ func (f *functions) FuncMap() map[string]any {
 	return map[string]any{
 		"name":                       f.Name,
 		"package":                    f.Package,
-		"objectType":                 f.ObjectType,
+		"objectPlace":                f.ObjectPlace,
 		"structs":                    f.Structs,
 		"interfaces":                 f.Interfaces,
 		"methods":                    f.Methods,
@@ -80,16 +80,16 @@ func (f *functions) Package() *packages.Package {
 	return f.pkg
 }
 
-func (f *functions) ObjectType(object types.Object) Type {
-	return f.packageParser.ObjectType(object)
+func (f *functions) ObjectPlace(object types.Object) Place {
+	return f.packageParser.ObjectPlace(object)
 }
 
 func (f *functions) Structs() []types.Object {
-	return f.filterByType(TypeStruct)
+	return f.filterByPlace(PlaceStruct)
 }
 
 func (f *functions) Interfaces() []types.Object {
-	return f.filterByType(TypeInterface)
+	return f.filterByPlace(PlaceInterface)
 }
 
 func (f *functions) Methods(object types.Object) []types.Object {
@@ -216,8 +216,8 @@ func (f *functions) Declare(object types.Object) string {
 }
 
 func (f *functions) DeclareType(object types.Object) string {
-	switch f.ObjectType(object) {
-	case TypeInterfaceMethod, TypeStructMethod, TypeFunc:
+	switch f.ObjectPlace(object) {
+	case PlaceInterfaceMethod, PlaceStructMethod, PlaceFunc:
 		signature := f.MethodSignature(object)
 		builder := strings.Builder{}
 		builder.Grow(32)
@@ -242,7 +242,7 @@ func (f *functions) DeclareType(object types.Object) string {
 		builder.WriteRune(')')
 
 		return builder.String()
-	case TypeVar, TypeFuncVar:
+	case PlaceVar, PlaceFuncVar:
 		return f.TypeString(object.Type())
 	}
 	return ""
@@ -272,13 +272,13 @@ func (f *functions) MultipleLines(linePrefix, lineSuffix, line string) string {
 	return strings.ReplaceAll(line, "\n", lineSuffix+"\"+\n"+linePrefix+"\"")
 }
 
-func (f *functions) filterByType(typ Type) []types.Object {
+func (f *functions) filterByPlace(place Place) []types.Object {
 	scope := f.pkg.Types.Scope()
 	var result []types.Object
 	for _, typeName := range scope.Names() {
 		object := scope.Lookup(typeName)
-		objectType := f.packageParser.ObjectType(object)
-		if objectType&typ > 0 {
+		objectPlace := f.packageParser.ObjectPlace(object)
+		if objectPlace&place > 0 {
 			result = append(result, object)
 		}
 	}

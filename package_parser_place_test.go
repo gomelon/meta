@@ -13,56 +13,56 @@ func TestObjectTarget(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want Type
+		want Place
 	}{
 		{
 			name: "Const",
 			args: args{
-				pkgPath:    "github.com/gomelon/meta/internal/testdata",
+				pkgPath:    "github.com/gomelon/meta/testdata",
 				objectName: "IntConst",
 			},
-			want: TypeConst,
+			want: PlaceConst,
 		},
 		{
 			name: "Var",
 			args: args{
-				pkgPath:    "github.com/gomelon/meta/internal/testdata",
+				pkgPath:    "github.com/gomelon/meta/testdata",
 				objectName: "IntVar",
 			},
-			want: TypeVar,
+			want: PlaceVar,
 		},
 		{
 			name: "Func",
 			args: args{
-				pkgPath:    "github.com/gomelon/meta/internal/testdata",
+				pkgPath:    "github.com/gomelon/meta/testdata",
 				objectName: "SimpleFunc",
 			},
-			want: TypeFunc,
+			want: PlaceFunc,
 		},
 		{
 			name: "Struct",
 			args: args{
-				pkgPath:    "github.com/gomelon/meta/internal/testdata",
+				pkgPath:    "github.com/gomelon/meta/testdata",
 				objectName: "SimpleStruct",
 			},
-			want: TypeStruct,
+			want: PlaceStruct,
 		},
 		{
 			name: "Interface",
 			args: args{
-				pkgPath:    "github.com/gomelon/meta/internal/testdata",
+				pkgPath:    "github.com/gomelon/meta/testdata",
 				objectName: "SimpleInterface",
 			},
-			want: TypeInterface,
+			want: PlaceInterface,
 		},
 	}
 	for _, tt := range tests {
 		packageParser := NewPackageParser()
 		_ = packageParser.Load(tt.args.pkgPath)
-		object := packageParser.TypeByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		object := packageParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		t.Run(tt.name, func(t *testing.T) {
-			if got := packageParser.ObjectType(object); got != tt.want {
-				t.Errorf("ObjectType() = %v, want %v", got, tt.want)
+			if got := packageParser.ObjectPlace(object); got != tt.want {
+				t.Errorf("ObjectPlace() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -76,26 +76,26 @@ func TestObjectTarget_StructField(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want Type
+		want Place
 	}{
 		{
 			name: "Member",
 			args: args{
-				pkgPath:    "github.com/gomelon/meta/internal/testdata",
+				pkgPath:    "github.com/gomelon/meta/testdata",
 				objectName: "SimpleStruct",
 			},
-			want: TypeField,
+			want: PlaceField,
 		},
 	}
 	for _, tt := range tests {
 		packageParser := NewPackageParser()
 		_ = packageParser.Load(tt.args.pkgPath)
-		object := packageParser.TypeByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		object := packageParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		structObject := object.Type().Underlying().(*types.Struct)
 		fieldObject := structObject.Field(0)
 		t.Run(tt.name, func(t *testing.T) {
-			if got := packageParser.ObjectType(fieldObject); got != tt.want {
-				t.Errorf("ObjectType() = %v, want %v", got, tt.want)
+			if got := packageParser.ObjectPlace(fieldObject); got != tt.want {
+				t.Errorf("ObjectPlace() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -109,9 +109,9 @@ func TestObjectTarget_StructMethod(t *testing.T) {
 		paramIndex  int //-1 means no test param
 		resultIndex int //-1 means no test result
 	}
-	wantMethodType := TypeStructMethod
-	wantParamType := TypeFuncVar
-	wantResultType := TypeFuncVar
+	wantMethodType := PlaceStructMethod
+	wantParamType := PlaceFuncVar
+	wantResultType := PlaceFuncVar
 	tests := []struct {
 		name string
 		args args
@@ -119,7 +119,7 @@ func TestObjectTarget_StructMethod(t *testing.T) {
 		{
 			name: "PointerMethod",
 			args: args{
-				pkgPath:     "github.com/gomelon/meta/internal/testdata",
+				pkgPath:     "github.com/gomelon/meta/testdata",
 				objectName:  "SimpleStruct",
 				methodName:  "PointerMethod",
 				paramIndex:  -1,
@@ -129,7 +129,7 @@ func TestObjectTarget_StructMethod(t *testing.T) {
 		{
 			name: "Method",
 			args: args{
-				pkgPath:     "github.com/gomelon/meta/internal/testdata",
+				pkgPath:     "github.com/gomelon/meta/testdata",
 				objectName:  "SimpleStruct",
 				methodName:  "Method",
 				paramIndex:  -1,
@@ -139,7 +139,7 @@ func TestObjectTarget_StructMethod(t *testing.T) {
 		{
 			name: "MethodWithParamAndResult",
 			args: args{
-				pkgPath:     "github.com/gomelon/meta/internal/testdata",
+				pkgPath:     "github.com/gomelon/meta/testdata",
 				objectName:  "SimpleStruct",
 				methodName:  "MethodWithParamAndResult",
 				paramIndex:  0,
@@ -149,7 +149,7 @@ func TestObjectTarget_StructMethod(t *testing.T) {
 		{
 			name: "MethodWithParamAndNameResult",
 			args: args{
-				pkgPath:     "github.com/gomelon/meta/internal/testdata",
+				pkgPath:     "github.com/gomelon/meta/testdata",
 				objectName:  "SimpleStruct",
 				methodName:  "MethodWithParamAndNameResult",
 				paramIndex:  0,
@@ -160,7 +160,7 @@ func TestObjectTarget_StructMethod(t *testing.T) {
 	for _, tt := range tests {
 		packageParser := NewPackageParser()
 		_ = packageParser.Load(tt.args.pkgPath)
-		object := packageParser.TypeByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		object := packageParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		namedObject := object.Type().(*types.Named)
 		var methodObject *types.Func
 		var paramObject *types.Var
@@ -179,18 +179,18 @@ func TestObjectTarget_StructMethod(t *testing.T) {
 			}
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			if got := packageParser.ObjectType(methodObject); got != wantMethodType {
-				t.Errorf("ObjectType(%v) = %v, wantMethodType %v", tt.args.methodName, got, wantMethodType)
+			if got := packageParser.ObjectPlace(methodObject); got != wantMethodType {
+				t.Errorf("ObjectPlace(%v) = %v, wantMethodType %v", tt.args.methodName, got, wantMethodType)
 			}
 			if tt.args.paramIndex >= 0 {
-				if got := packageParser.ObjectType(paramObject); got != wantParamType {
-					t.Errorf("ObjectType(%v.params[%v]) = %v, wantMethodType %v",
+				if got := packageParser.ObjectPlace(paramObject); got != wantParamType {
+					t.Errorf("ObjectPlace(%v.params[%v]) = %v, wantMethodType %v",
 						tt.args.methodName, tt.args.paramIndex, got, wantParamType)
 				}
 			}
 			if tt.args.resultIndex >= 0 {
-				if got := packageParser.ObjectType(resultObject); got != wantResultType {
-					t.Errorf("ObjectType(%v.results[%v]) = %v, wantMethodType %v",
+				if got := packageParser.ObjectPlace(resultObject); got != wantResultType {
+					t.Errorf("ObjectPlace(%v.results[%v]) = %v, wantMethodType %v",
 						tt.args.methodName, tt.args.resultIndex, got, wantResultType)
 				}
 			}
@@ -206,9 +206,9 @@ func TestObjectTarget_InterfaceMethod(t *testing.T) {
 		paramIndex  int //-1 means no test param
 		resultIndex int //-1 means no test result
 	}
-	wantMethodType := TypeInterfaceMethod
-	wantParamType := TypeFuncVar
-	wantResultType := TypeFuncVar
+	wantMethodType := PlaceInterfaceMethod
+	wantParamType := PlaceFuncVar
+	wantResultType := PlaceFuncVar
 	tests := []struct {
 		name string
 		args args
@@ -216,7 +216,7 @@ func TestObjectTarget_InterfaceMethod(t *testing.T) {
 		{
 			name: "Method",
 			args: args{
-				pkgPath:     "github.com/gomelon/meta/internal/testdata",
+				pkgPath:     "github.com/gomelon/meta/testdata",
 				objectName:  "SimpleInterface",
 				methodName:  "Method",
 				paramIndex:  -1,
@@ -226,7 +226,7 @@ func TestObjectTarget_InterfaceMethod(t *testing.T) {
 		{
 			name: "Method",
 			args: args{
-				pkgPath:     "github.com/gomelon/meta/internal/testdata",
+				pkgPath:     "github.com/gomelon/meta/testdata",
 				objectName:  "SimpleInterface",
 				methodName:  "MethodWithParamAndResult",
 				paramIndex:  0,
@@ -236,7 +236,7 @@ func TestObjectTarget_InterfaceMethod(t *testing.T) {
 		{
 			name: "Method",
 			args: args{
-				pkgPath:     "github.com/gomelon/meta/internal/testdata",
+				pkgPath:     "github.com/gomelon/meta/testdata",
 				objectName:  "SimpleInterface",
 				methodName:  "MethodWithParamAndNameResult",
 				paramIndex:  0,
@@ -247,7 +247,7 @@ func TestObjectTarget_InterfaceMethod(t *testing.T) {
 	for _, tt := range tests {
 		packageParser := NewPackageParser()
 		_ = packageParser.Load(tt.args.pkgPath)
-		object := packageParser.TypeByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		object := packageParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		itf := object.Type().Underlying().(*types.Interface)
 		var methodObject *types.Func
 		var paramObject *types.Var
@@ -267,18 +267,18 @@ func TestObjectTarget_InterfaceMethod(t *testing.T) {
 			}
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			if got := packageParser.ObjectType(methodObject); got != wantMethodType {
-				t.Errorf("ObjectType() = %v, want %v", got, wantMethodType)
+			if got := packageParser.ObjectPlace(methodObject); got != wantMethodType {
+				t.Errorf("ObjectPlace() = %v, want %v", got, wantMethodType)
 			}
 			if tt.args.paramIndex >= 0 {
-				if got := packageParser.ObjectType(paramObject); got != wantParamType {
-					t.Errorf("ObjectType(%v.params[%v]) = %v, wantMethodType %v",
+				if got := packageParser.ObjectPlace(paramObject); got != wantParamType {
+					t.Errorf("ObjectPlace(%v.params[%v]) = %v, wantMethodType %v",
 						tt.args.methodName, tt.args.paramIndex, got, wantParamType)
 				}
 			}
 			if tt.args.resultIndex >= 0 {
-				if got := packageParser.ObjectType(resultObject); got != wantResultType {
-					t.Errorf("ObjectType(%v.results[%v]) = %v, wantMethodType %v",
+				if got := packageParser.ObjectPlace(resultObject); got != wantResultType {
+					t.Errorf("ObjectPlace(%v.results[%v]) = %v, wantMethodType %v",
 						tt.args.methodName, tt.args.resultIndex, got, wantResultType)
 				}
 			}

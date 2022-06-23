@@ -66,8 +66,8 @@ func (metaParser *MetaParser) ObjectMetaGroup(object types.Object, metaName stri
 		return
 	}
 
-	objectType := metaParser.packageParser.ObjectType(object)
-	if meta.Target()&objectType == 0 {
+	objectPlace := metaParser.packageParser.ObjectPlace(object)
+	if meta.PlaceAt()&objectPlace == 0 {
 		return
 	}
 

@@ -1,7 +1,7 @@
 package meta
 
 type Meta interface {
-	Target() Type
+	PlaceAt() Place
 	Directive() string
 	Repeatable() bool
 }
