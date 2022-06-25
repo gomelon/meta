@@ -36,6 +36,9 @@ func (f *functions) FuncMap() map[string]any {
 		"name":                       f.Name,
 		"package":                    f.Package,
 		"objectPlace":                f.ObjectPlace,
+		"objectType":                 f.ObjectType,
+		"typeName":                   f.TypeName,
+		"underlyingType":             f.UnderlyingType,
 		"structs":                    f.Structs,
 		"interfaces":                 f.Interfaces,
 		"methods":                    f.Methods,
@@ -53,7 +56,7 @@ func (f *functions) FuncMap() map[string]any {
 		"filterByMethodContainsMeta": f.FilterByMethodContainsMeta,
 		"hasMethodContainsMeta":      f.HasMethodContainsMeta,
 		"filterObjects":              f.FilterObjects,
-		"indirectObject":             f.IndirectObject,
+		"indirect":                   f.Indirect,
 		"declare":                    f.Declare,
 		"declareType":                f.DeclareType,
 		"typeString":                 f.TypeString,
@@ -82,6 +85,18 @@ func (f *functions) Package() *packages.Package {
 
 func (f *functions) ObjectPlace(object types.Object) Place {
 	return f.packageParser.ObjectPlace(object)
+}
+
+func (f *functions) ObjectType(object types.Object) types.Type {
+	return object.Type()
+}
+
+func (f *functions) TypeName(typ types.Type) string {
+	return f.packageParser.TypeName(typ)
+}
+
+func (f *functions) UnderlyingType(typ types.Type) types.Type {
+	return f.packageParser.UnderlyingType(typ)
 }
 
 func (f *functions) Structs() []types.Object {
@@ -203,8 +218,8 @@ func (f *functions) FilterObjects(objects []types.Object, filters ...func(types.
 	return result
 }
 
-func (f *functions) IndirectObject(object types.Object) types.Type {
-	return f.packageParser.IndirectObject(object)
+func (f *functions) Indirect(typ types.Type) types.Type {
+	return f.packageParser.Indirect(typ)
 }
 
 func (f *functions) Declare(object types.Object) string {

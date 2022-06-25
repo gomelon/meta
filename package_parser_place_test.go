@@ -79,7 +79,7 @@ func TestObjectTarget_StructField(t *testing.T) {
 		want Place
 	}{
 		{
-			name: "Member",
+			name: "Field",
 			args: args{
 				pkgPath:    "github.com/gomelon/meta/testdata",
 				objectName: "SimpleStruct",

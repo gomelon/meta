@@ -208,14 +208,12 @@ func (pp *PackageParser) HasErrorResult(methodOrFunc types.Object) bool {
 	return lastResult.Type().String() == "error"
 }
 
-func (pp *PackageParser) IndirectObject(object types.Object) types.Type {
-	pointer := object.Type().(*types.Pointer)
+func (pp *PackageParser) Indirect(typ types.Type) types.Type {
+	pointer := typ.(*types.Pointer)
 	return pointer.Elem().(types.Type)
 }
 
 func (pp *PackageParser) ObjectPlace(object types.Object) (objectPlace Place) {
-	type2 := pp.ObjectPlace2(object)
-	println(type2)
 	objectPlaceValue, ok := pp.objectToPlace.Load(object)
 	if ok {
 		objectPlace = objectPlaceValue.(Place)
@@ -274,15 +272,64 @@ func (pp *PackageParser) ObjectPlace(object types.Object) (objectPlace Place) {
 	return
 }
 
-func (pp *PackageParser) ObjectPlace2(object types.Object) string {
+const (
+	TypeNamePointer   = "Pointer"
+	TypeNameStruct    = "Struct"
+	TypeNameInterface = "Interface"
+	TypeNameSignature = "Signature"
+	TypeNameBasic     = "Basic"
+	TypeNameSlice     = "Slice"
+	TypeNameMap       = "Map"
+	TypeNameNamed     = "Named"
+	TypeNameTuple     = "Tuple" //see types.Tuple
+	TypeNameArray     = "Array"
+	TypeNameChan      = "Chan"
+)
+
+func (pp *PackageParser) TypeName(typ types.Type) string {
 	var typName string
-	switch typ := object.Type().(type) {
-	case *types.Pointer, *types.Interface, *types.Struct:
-		typName = typ.String()
+	switch typ := typ.(type) {
+	case *types.Pointer:
+		typName = TypeNamePointer
+	case *types.Struct:
+		typName = TypeNameStruct
+	case *types.Interface:
+		typName = TypeNameInterface
+	case *types.Signature:
+		typName = TypeNameSignature
+	case *types.Basic:
+		typName = TypeNameBasic
+	case *types.Slice:
+		typName = TypeNameSlice
+	case *types.Map:
+		typName = TypeNameMap
+	case *types.Named:
+		typName = TypeNameNamed
+	case *types.Tuple:
+		typName = TypeNameTuple
+	case *types.Array:
+		typName = TypeNameArray
+	case *types.Chan:
+		typName = TypeNameChan
 	default:
 		typName = typ.String()
 	}
 	return typName
+}
+
+func (pp *PackageParser) UnderlyingType(typ types.Type) types.Type {
+	switch typ := typ.(type) {
+	case *types.Named, *types.Basic, *types.Struct, *types.Interface, *types.Chan, *types.Signature:
+		return typ
+	case *types.Pointer:
+		return pp.UnderlyingType(typ.Elem())
+	case *types.Slice:
+		return pp.UnderlyingType(typ.Elem())
+	case *types.Map:
+		return pp.UnderlyingType(typ.Elem())
+	default:
+		panic(fmt.Errorf("msql fail: unsupported result type from query"))
+	}
 }
 
 func (pp *PackageParser) Comments(pos token.Pos) []string {
