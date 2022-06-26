@@ -17,6 +17,7 @@ type TemplateGenerator struct {
 	metas           []Meta
 	packageParser   *PackageParser
 	metaParser      *MetaParser
+	pkgFunctions    *functions
 	importTracker   ImportTracker
 	funcMapProvider func(generator *TemplateGenerator) map[string]any
 	tpl             *template.Template
@@ -86,6 +87,7 @@ func NewTemplateGenerator(path string, templateText string, options ...TGOption)
 	}
 
 	functions := newFunctions(gen.packageParser, gen.metaParser, gen.importTracker, gen.pkgPath)
+	gen.pkgFunctions = functions
 
 	tpl, err := template.New("TemplateGen").
 		Funcs(sprig.GenericFuncMap()).
@@ -114,6 +116,10 @@ func (gen *TemplateGenerator) PackageParser() *PackageParser {
 
 func (gen *TemplateGenerator) MetaParser() *MetaParser {
 	return gen.metaParser
+}
+
+func (gen *TemplateGenerator) PkgFunctions() *functions {
+	return gen.pkgFunctions
 }
 
 func (gen *TemplateGenerator) ImportTracker() ImportTracker {

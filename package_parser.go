@@ -319,8 +319,10 @@ func (pp *PackageParser) TypeName(typ types.Type) string {
 
 func (pp *PackageParser) UnderlyingType(typ types.Type) types.Type {
 	switch typ := typ.(type) {
-	case *types.Named, *types.Basic, *types.Struct, *types.Interface, *types.Chan, *types.Signature:
+	case *types.Basic, *types.Struct, *types.Interface, *types.Chan, *types.Signature:
 		return typ
+	case *types.Named:
+		return pp.UnderlyingType(typ.Underlying())
 	case *types.Pointer:
 		return pp.UnderlyingType(typ.Elem())
 	case *types.Slice:

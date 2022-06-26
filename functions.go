@@ -1,6 +1,7 @@
 package meta
 
 import (
+	"fmt"
 	"github.com/antonmedv/expr"
 	"go/types"
 	"golang.org/x/tools/go/packages"
@@ -60,6 +61,7 @@ func (f *functions) FuncMap() map[string]any {
 		"declare":                    f.Declare,
 		"declareType":                f.DeclareType,
 		"typeString":                 f.TypeString,
+		"initType":                   f.InitType,
 		"methodSignature":            f.MethodSignature,
 		"import":                     f.Import,
 		"objectMetaGroups":           f.ObjectMetaGroups,
@@ -265,6 +267,46 @@ func (f *functions) DeclareType(object types.Object) string {
 
 func (f *functions) TypeString(typ types.Type) string {
 	return types.TypeString(typ, f.typeQualifier)
+}
+
+func (f *functions) InitType(typ types.Type) string {
+	var result string
+	switch typ := typ.(type) {
+	case *types.Pointer:
+		result = "&" + f.InitType(typ.Elem())
+	case *types.Struct:
+		result = "{}"
+	case *types.Basic:
+		switch typ.Kind() {
+		case types.String:
+			result = "\"\""
+		case types.Int, types.Int8, types.Int16, types.Int32, types.Int64,
+			types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64,
+			types.Uintptr,
+			types.Float32, types.Float64:
+			result = typ.Name() + "(0)"
+		case types.Bool:
+		case types.Complex64, types.Complex128:
+			result = typ.Name() + "(0,0)"
+		default:
+			panic(fmt.Errorf("meta: unsupported type to init, type=%s", typ.Name()))
+		}
+	case *types.Slice:
+		result = f.TypeString(typ) + "{}"
+	case *types.Map:
+		//TODO wait complete
+	case *types.Named:
+		result = f.TypeString(typ) + f.InitType(typ.Underlying())
+	case *types.Tuple:
+		//TODO wait complete
+	case *types.Array:
+		//TODO wait complete
+	case *types.Chan:
+		//TODO wait complete
+	default:
+		result = typ.String()
+	}
+	return result
 }
 
 func (f *functions) MethodSignature(object types.Object) *types.Signature {
