@@ -38,6 +38,8 @@ func (f *functions) FuncMap() map[string]any {
 		"package":                    f.Package,
 		"objectByPkgPathAndName":     f.ObjectByPkgPathAndName,
 		"assignableToCtx":            f.AssignableToCtx,
+		"assignableTo":               f.AssignableTo,
+		"exported":                   f.Exported,
 		"objectPlace":                f.ObjectPlace,
 		"objectType":                 f.ObjectType,
 		"typeName":                   f.TypeName,
@@ -94,6 +96,14 @@ func (f *functions) ObjectByPkgPathAndName(pkgPath, typeName string) types.Objec
 
 func (f *functions) AssignableToCtx(v types.Type) bool {
 	return f.packageParser.AssignableToCtx(v)
+}
+
+func (f *functions) AssignableTo(v, t types.Type) bool {
+	return f.packageParser.AssignableTo(v, t)
+}
+
+func (f *functions) Exported(object types.Object) bool {
+	return object.Exported()
 }
 
 func (f *functions) ObjectPlace(object types.Object) Place {
@@ -213,20 +223,14 @@ func (f *functions) HasMethodContainsMeta(metaName string, object types.Object) 
 	return false
 }
 
-func (f *functions) FilterObjects(objects []types.Object, filters ...func(types.Object) bool) []types.Object {
+func (f *functions) FilterObjects(filterFuncName string, objects []types.Object) []types.Object {
+	filter := f.FuncMap()[filterFuncName].(func(types.Object) bool)
 	result := make([]types.Object, 2)
-	var ok bool
 	for _, object := range objects {
-		ok = true
-		for _, filter := range filters {
-			if !filter(object) {
-				ok = false
-				break
-			}
+		if !filter(object) {
+			continue
 		}
-		if ok {
-			result = append(result, object)
-		}
+		result = append(result, object)
 	}
 	return result
 }
@@ -236,6 +240,9 @@ func (f *functions) Indirect(typ types.Type) types.Type {
 }
 
 func (f *functions) Declare(object types.Object) string {
+	if object == nil {
+		return ""
+	}
 	if len(object.Name()) > 0 {
 		return object.Name() + " " + f.DeclareType(object)
 	} else {

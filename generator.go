@@ -192,7 +192,11 @@ func (gen *TemplateGenerator) generate(writer io.Writer) (err error) {
 
 func (gen *TemplateGenerator) outputFile() string {
 	pkg := gen.packageParser.Package(gen.pkgPath)
-	return fmt.Sprintf("%s/%s_gen.go", gen.path, pkg.Name)
+	prefix := pkg.Name
+	if len(gen.metas) > 0 {
+		prefix = strings.ReplaceAll(gen.metas[0].Directive(), ":", "_")
+	}
+	return fmt.Sprintf("%s/%s_gen.go", gen.path, prefix)
 }
 
 func (gen *TemplateGenerator) writerHeader(writer *bytes.Buffer) {
