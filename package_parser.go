@@ -8,6 +8,7 @@ import (
 	"go/types"
 	"golang.org/x/tools/go/packages"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -48,7 +49,23 @@ func NewPackageParser() *PackageParser {
 	}
 }
 
+//Load path, path may be relative path/absolute path/package path
 func (pp *PackageParser) Load(paths ...string) (err error) {
+
+	unloadedPaths := make([]string, 0, len(paths))
+	for _, path := range paths {
+		if pp.pkgPathToPath[path] != "" {
+			continue
+		}
+		if pp.pathToPkgPath[path] != "" {
+			continue
+		}
+		absPath, _ := filepath.Abs(path)
+		if pp.pathToPkgPath[absPath] != "" {
+			continue
+		}
+		unloadedPaths = append(unloadedPaths, path)
+	}
 
 	cfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles |
@@ -70,7 +87,7 @@ func (pp *PackageParser) Load(paths ...string) (err error) {
 		Tests: false,
 	}
 
-	packageList, err := packages.Load(cfg, paths...)
+	packageList, err := packages.Load(cfg, unloadedPaths...)
 	if err != nil {
 		return
 	}
@@ -107,12 +124,38 @@ func (pp *PackageParser) PkgPath(path string) string {
 	return pp.pathToPkgPath[path]
 }
 
-func (pp *PackageParser) ObjectByPkgPathAndName(packagePath, typeName string) types.Object {
-	pkg := pp.Package(packagePath)
+func (pp *PackageParser) ObjectByPkgPathAndName(pkgPath, typeName string) types.Object {
+	err := pp.Load(pkgPath)
+	if err != nil {
+		panic(fmt.Errorf("can't load pakcage %s", pkgPath))
+	}
+	pkg := pp.Package(pkgPath)
 	if pkg == nil {
 		return nil
 	}
 	return pkg.Types.Scope().Lookup(typeName)
+}
+
+// AssignableToCtx reports whether a value of type V is assignable to a variable of type T.
+// The behavior of AssignableTo is undefined if V or T is an uninstantiated generic type.
+func (pp *PackageParser) AssignableToCtx(v types.Type) bool {
+	ctxObject := pp.ObjectByPkgPathAndName("context", "Context")
+	return pp.AssignableTo(v, ctxObject.Type())
+}
+
+func (pp *PackageParser) AssignableTo(v, t types.Type) bool {
+	if pp.TypeName(t) == TypeNameNamed {
+		t = t.Underlying()
+	}
+	namedV, ok := v.(*types.Named)
+	if !ok {
+		return types.AssignableTo(v, t)
+	}
+	namedVObj := namedV.Obj()
+	namedVObjPkgPath := namedVObj.Pkg().Path()
+	namedVObjName := namedVObj.Name()
+	vObject := pp.ObjectByPkgPathAndName(namedVObjPkgPath, namedVObjName)
+	return types.AssignableTo(vObject.Type(), t)
 }
 
 func (pp *PackageParser) Methods(object types.Object) []types.Object {
@@ -360,9 +403,9 @@ func (pp *PackageParser) doPosToComments(astFile *ast.File) error {
 			case *ast.ValueSpec:
 				nodeIdentPos = node.Names[0].Pos()
 			default:
-				position := pp.fileSet.Position(node.Pos())
-				fmt.Printf("file=%v,line=%v,column=%v", position.Filename, position.Line, position.Column)
-				return fmt.Errorf("parse pp: don't support parse comment for [%#v]", node)
+				//position := pp.fileSet.Position(node.Pos())
+				//fmt.Printf("file=%v,line=%v,column=%v", position.Filename, position.Line, position.Column)
+				//return fmt.Errorf("parse package: don't support parse comment for [%#v]", node)
 			}
 		case *ast.File:
 			nodeIdentPos = node.Name.Pos()
@@ -370,9 +413,9 @@ func (pp *PackageParser) doPosToComments(astFile *ast.File) error {
 			*ast.IfStmt, *ast.ForStmt, *ast.Ident, *ast.ImportSpec, *ast.RangeStmt:
 			continue
 		default:
-			position := pp.fileSet.Position(node.Pos())
-			fmt.Printf("file=%v,line=%v,column=%v", position.Filename, position.Line, position.Column)
-			return fmt.Errorf("parse pp: don't support parse comment for [%#v]", node)
+			//position := pp.fileSet.Position(node.Pos())
+			//fmt.Printf("file=%v,line=%v,column=%v", position.Filename, position.Line, position.Column)
+			//return fmt.Errorf("parse package: don't support parse comment for [%#v]", node)
 		}
 		commentLines := convertCommentGroupsToStrings(commentGroups)
 		pp.posToComments.Store(nodeIdentPos, commentLines)

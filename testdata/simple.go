@@ -1,6 +1,7 @@
 package testdata
 
 import (
+	"context"
 	"time"
 )
 
@@ -9,6 +10,8 @@ const IntConst = 1
 var IntVar int
 
 var StringVar string
+
+var varCtx context.Context
 
 type SimpleStruct struct {
 	Name string

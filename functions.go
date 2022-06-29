@@ -36,6 +36,8 @@ func (f *functions) FuncMap() map[string]any {
 	return map[string]any{
 		"name":                       f.Name,
 		"package":                    f.Package,
+		"objectByPkgPathAndName":     f.ObjectByPkgPathAndName,
+		"assignableToCtx":            f.AssignableToCtx,
 		"objectPlace":                f.ObjectPlace,
 		"objectType":                 f.ObjectType,
 		"typeName":                   f.TypeName,
@@ -67,6 +69,7 @@ func (f *functions) FuncMap() map[string]any {
 		"objectMetaGroups":           f.ObjectMetaGroups,
 		"objectMetaGroup":            f.ObjectMetaGroup,
 		"multipleLines":              f.MultipleLines,
+		"fail":                       f.Fail,
 	}
 }
 
@@ -83,6 +86,14 @@ func (f *functions) Name(in any) string {
 
 func (f *functions) Package() *packages.Package {
 	return f.pkg
+}
+
+func (f *functions) ObjectByPkgPathAndName(pkgPath, typeName string) types.Object {
+	return f.packageParser.ObjectByPkgPathAndName(pkgPath, typeName)
+}
+
+func (f *functions) AssignableToCtx(v types.Type) bool {
+	return f.packageParser.AssignableToCtx(v)
 }
 
 func (f *functions) ObjectPlace(object types.Object) Place {
@@ -327,6 +338,10 @@ func (f *functions) ObjectMetaGroup(object types.Object, metaName string) Group 
 
 func (f *functions) MultipleLines(linePrefix, lineSuffix, line string) string {
 	return strings.ReplaceAll(line, "\n", lineSuffix+"\"+\n"+linePrefix+"\"")
+}
+
+func (f *functions) Fail(err string, args ...any) (any, error) {
+	return nil, fmt.Errorf(err, args...)
 }
 
 func (f *functions) filterByPlace(place Place) []types.Object {

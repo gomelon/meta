@@ -77,3 +77,76 @@ func TestPackagesHelper_FindType(t *testing.T) {
 		})
 	}
 }
+
+func TestPackageParser_AssignableTo(t *testing.T) {
+	type args struct {
+		vPkgPath, vName string
+		tPkgPath, tName string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "struct implement interface",
+			args: args{
+				vPkgPath: "github.com/gomelon/meta/testdata",
+				vName:    "SimpleStruct",
+				tPkgPath: "github.com/gomelon/meta/testdata",
+				tName:    "SimpleInterface",
+			},
+			want: true,
+		},
+		{
+			name: "struct not implement interface",
+			args: args{
+				vPkgPath: "github.com/gomelon/meta/testdata",
+				vName:    "SimpleStruct",
+				tPkgPath: "github.com/gomelon/meta/testdata",
+				tName:    "UserDao",
+			},
+			want: false,
+		},
+		{
+			name: "same interface",
+			args: args{
+				vPkgPath: "github.com/gomelon/meta/testdata",
+				vName:    "SimpleInterface",
+				tPkgPath: "github.com/gomelon/meta/testdata",
+				tName:    "SimpleInterface",
+			},
+			want: true,
+		},
+		{
+			name: "context to context",
+			args: args{
+				vPkgPath: "context",
+				vName:    "Context",
+				tPkgPath: "context",
+				tName:    "Context",
+			},
+			want: true,
+		},
+		{
+			name: "var context to context",
+			args: args{
+				vPkgPath: "github.com/gomelon/meta/testdata",
+				vName:    "varCtx",
+				tPkgPath: "context",
+				tName:    "Context",
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			packageParser := NewPackageParser()
+			vType := packageParser.ObjectByPkgPathAndName(tt.args.vPkgPath, tt.args.vName).Type()
+			tType := packageParser.ObjectByPkgPathAndName(tt.args.tPkgPath, tt.args.tName).Type()
+			if got := packageParser.AssignableTo(vType, tType); got != tt.want {
+				t.Errorf("AssignableTo() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -27,10 +27,10 @@ type User struct {
 }
 
 //UserDao 用户信息Dao
-//sql:table value=`user1`
+//sql:table value="`user1`"
 type UserDao interface {
 	//FindById 通过ID获取用户信息
-	/*sql:query value="select * from `user` where id = :id" Master Omitempty*/
+	/*sql:query value="select * from `user` where id = :id" master omitempty*/
 	FindById(ctx context.Context, id int64) *User
 	FindByBirthdayGte(ctx context.Context /*sql:param ctx*/, time time.Time) []*User
 	//FindByName 通过用户名获取用户信息

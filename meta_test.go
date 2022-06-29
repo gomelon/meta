@@ -20,9 +20,9 @@ func (t *Table) Repeatable() bool {
 }
 
 type Query struct {
-	Value     string
-	Master    bool
-	Omitempty bool
+	Value     string `json:"value,string"`
+	Master    bool   `json:"master,string"`
+	Omitempty bool   `json:"omitempty,string"`
 }
 
 func (q *Query) Target() Place {
