@@ -71,7 +71,6 @@ func (f *functions) FuncMap() map[string]any {
 		"objectMetaGroups":           f.ObjectMetaGroups,
 		"objectMetaGroup":            f.ObjectMetaGroup,
 		"multipleLines":              f.MultipleLines,
-		"fail":                       f.Fail,
 	}
 }
 
@@ -345,10 +344,6 @@ func (f *functions) ObjectMetaGroup(object types.Object, metaName string) Group 
 
 func (f *functions) MultipleLines(linePrefix, lineSuffix, line string) string {
 	return strings.ReplaceAll(line, "\n", lineSuffix+"\"+\n"+linePrefix+"\"")
-}
-
-func (f *functions) Fail(err string, args ...any) (any, error) {
-	return nil, fmt.Errorf(err, args...)
 }
 
 func (f *functions) filterByPlace(place Place) []types.Object {
