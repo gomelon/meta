@@ -21,6 +21,10 @@ type TemplateGenerator struct {
 	importTracker   ImportTracker
 	funcMapProvider func(generator *TemplateGenerator) map[string]any
 	tpl             *template.Template
+
+	outputFilePrefix string
+	outputFileSuffix string
+	outputFileName   string
 }
 
 type TGOption func(gen *TemplateGenerator)
@@ -55,6 +59,12 @@ func WithFuncMapProvider(provider func(generator *TemplateGenerator) map[string]
 	}
 }
 
+func WithOutputFilePrefix(prefix string) TGOption {
+	return func(gen *TemplateGenerator) {
+		gen.outputFilePrefix = prefix
+	}
+}
+
 func NewTemplateGenerator(path string, templateText string, options ...TGOption) (gen *TemplateGenerator, err error) {
 
 	gen = &TemplateGenerator{
@@ -62,6 +72,8 @@ func NewTemplateGenerator(path string, templateText string, options ...TGOption)
 		funcMapProvider: func(generator *TemplateGenerator) map[string]any {
 			return map[string]any{}
 		},
+		outputFilePrefix: "zz_",
+		outputFileSuffix: "_gen",
 	}
 	gen.path = path
 	for _, option := range options {
@@ -192,11 +204,22 @@ func (gen *TemplateGenerator) generate(writer io.Writer) (err error) {
 
 func (gen *TemplateGenerator) outputFile() string {
 	pkg := gen.packageParser.Package(gen.pkgPath)
-	prefix := pkg.Name
-	if len(gen.metas) > 0 {
-		prefix = strings.ReplaceAll(gen.metas[0].Directive(), ":", "_")
+	outputFileName := gen.outputFileName
+	if len(outputFileName) == 0 {
+		if len(gen.metas) > 0 {
+			directiveParts := strings.Split(gen.metas[0].Directive(), ":")
+			if len(directiveParts) > 1 {
+				outputFileName = strings.Join(directiveParts[:len(directiveParts)-1], "_")
+			} else {
+				outputFileName = directiveParts[0]
+			}
+		} else {
+			outputFileName = pkg.Name
+		}
+		outputFileName = gen.outputFilePrefix + outputFileName + gen.outputFileSuffix
 	}
-	return fmt.Sprintf("%s/%s_gen.go", gen.path, prefix)
+
+	return fmt.Sprintf("%s/%s.go", gen.path, outputFileName)
 }
 
 func (gen *TemplateGenerator) writerHeader(writer *bytes.Buffer) {

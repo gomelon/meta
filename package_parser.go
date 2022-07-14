@@ -37,6 +37,8 @@ type PackageParser struct {
 	pkgPathToPath        map[string]string
 	objectToPlace        sync.Map // key=types.Object,value=Place
 	fileSet              *token.FileSet
+	filenameToAstFile    sync.Map //key=string,value=*ast.File
+	fileParsingLock      sync.Map //key=string,value=*sync.Mutex
 }
 
 func NewPackageParser() *PackageParser {
@@ -53,18 +55,18 @@ func NewPackageParser() *PackageParser {
 func (pp *PackageParser) Load(paths ...string) (err error) {
 
 	unloadedPaths := make([]string, 0, len(paths))
-	for _, path := range paths {
-		if pp.pkgPathToPath[path] != "" {
+	for _, inputPath := range paths {
+		if pp.pkgPathToPath[inputPath] != "" {
 			continue
 		}
-		if pp.pathToPkgPath[path] != "" {
+		if pp.pathToPkgPath[inputPath] != "" {
 			continue
 		}
-		absPath, _ := filepath.Abs(path)
+		absPath, _ := filepath.Abs(inputPath)
 		if pp.pathToPkgPath[absPath] != "" {
 			continue
 		}
-		unloadedPaths = append(unloadedPaths, path)
+		unloadedPaths = append(unloadedPaths, inputPath)
 	}
 
 	cfg := &packages.Config{
@@ -73,18 +75,8 @@ func (pp *PackageParser) Load(paths ...string) (err error) {
 		//TODO 如果其它地方的代码有依赖生成的文件,但又不加入解析,是否有问题?
 		BuildFlags: []string{"-tags", GeneratedBuildTag},
 		Fset:       pp.fileSet,
-		ParseFile: func(fileSet *token.FileSet, filename string, src []byte) (astFile *ast.File, err error) {
-			mode := parser.ParseComments
-			astFile, err = parser.ParseFile(fileSet, filename, src, mode)
-
-			if err != nil {
-				return
-			}
-
-			err = pp.doPosToComments(astFile)
-			return
-		},
-		Tests: false,
+		ParseFile:  pp.parseFile,
+		Tests:      false,
 	}
 
 	packageList, err := packages.Load(cfg, unloadedPaths...)
@@ -136,26 +128,32 @@ func (pp *PackageParser) ObjectByPkgPathAndName(pkgPath, typeName string) types.
 	return pkg.Types.Scope().Lookup(typeName)
 }
 
-// AssignableToCtx reports whether a value of type V is assignable to a variable of type T.
+// AssignableToCtx reports whether a value of type V is assignable to context.Context.
 // The behavior of AssignableTo is undefined if V or T is an uninstantiated generic type.
 func (pp *PackageParser) AssignableToCtx(v types.Type) bool {
+	if v.String() == "context.Context" {
+		return true
+	}
 	ctxObject := pp.ObjectByPkgPathAndName("context", "Context")
 	return pp.AssignableTo(v, ctxObject.Type())
 }
 
+// AssignableTo reports whether a value of type V is assignable to a variable of type T.
+// The behavior of AssignableTo is undefined if V or T is an uninstantiated generic type.
+//TODO This has performance problems, and subsequent optimization needs to be done, using cache?
 func (pp *PackageParser) AssignableTo(v, t types.Type) bool {
 	if pp.TypeName(t) == TypeNameNamed {
 		t = t.Underlying()
 	}
 	namedV, ok := v.(*types.Named)
 	if !ok {
-		return types.AssignableTo(v, t)
+		return v.String() == t.String() || types.AssignableTo(v, t)
 	}
 	namedVObj := namedV.Obj()
 	namedVObjPkgPath := namedVObj.Pkg().Path()
 	namedVObjName := namedVObj.Name()
 	vObject := pp.ObjectByPkgPathAndName(namedVObjPkgPath, namedVObjName)
-	return types.AssignableTo(vObject.Type(), t)
+	return v.String() == t.String() || types.AssignableTo(vObject.Type(), t)
 }
 
 func (pp *PackageParser) Methods(object types.Object) []types.Object {
@@ -385,6 +383,35 @@ func (pp *PackageParser) Comments(pos token.Pos) []string {
 	return value.([]string)
 }
 
+func (pp *PackageParser) parseFile(fileSet *token.FileSet, filename string, src []byte) (astFile *ast.File, err error) {
+	lockerObj, _ := pp.fileParsingLock.LoadOrStore(filename, &sync.Mutex{})
+	defer pp.fileParsingLock.Delete(filename)
+	locker := lockerObj.(*sync.Mutex)
+	locked := locker.TryLock()
+	defer locker.Unlock()
+	if !locked {
+		locker.Lock()
+		return
+	}
+	astFileObj, ok := pp.filenameToAstFile.Load(filename)
+	if ok {
+		astFile = astFileObj.(*ast.File)
+		return
+	}
+
+	mode := parser.ParseComments
+	astFile, err = parser.ParseFile(fileSet, filename, src, mode)
+
+	if err != nil {
+		return
+	}
+
+	err = pp.doPosToComments(astFile)
+
+	pp.filenameToAstFile.Store(filename, astFile)
+	return
+}
+
 func (pp *PackageParser) doPosToComments(astFile *ast.File) error {
 	commentMap := ast.NewCommentMap(pp.fileSet, astFile, astFile.Comments)
 	for astNode, commentGroups := range commentMap {
@@ -434,6 +461,7 @@ func convertCommentGroupsToStrings(commentGroups []*ast.CommentGroup) []string {
 			} else {
 				singleCommentGroup := &ast.CommentGroup{List: []*ast.Comment{comment}}
 				commentLine = strings.TrimSpace(singleCommentGroup.Text())
+				commentLine = strings.ReplaceAll(commentLine, "\n\t", "\n")
 			}
 			commentLines = append(commentLines, commentLine)
 		}

@@ -303,6 +303,7 @@ func (f *functions) InitType(typ types.Type) string {
 			types.Float32, types.Float64:
 			result = typ.Name() + "(0)"
 		case types.Bool:
+			result = "false"
 		case types.Complex64, types.Complex128:
 			result = typ.Name() + "(0,0)"
 		default:
@@ -342,8 +343,8 @@ func (f *functions) ObjectMetaGroup(object types.Object, metaName string) Group 
 	return f.metaParser.ObjectMetaGroup(object, metaName)
 }
 
-func (f *functions) MultipleLines(linePrefix, lineSuffix, line string) string {
-	return strings.ReplaceAll(line, "\n", lineSuffix+"\"+\n"+linePrefix+"\"")
+func (f *functions) MultipleLines(line string) string {
+	return "\"" + strings.ReplaceAll(line, "\n", "\\n\"+\n\"") + "\""
 }
 
 func (f *functions) filterByPlace(place Place) []types.Object {
