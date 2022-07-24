@@ -26,7 +26,7 @@ func TestTemplateGen(t *testing.T) {
 	workdir, _ := os.Getwd()
 	path := workdir + "/testdata"
 	metas := []Meta{&Table{}}
-	generator, err := NewTemplateGenerator(path, tplText, WithMetas(metas))
+	generator, err := NewTplPkgGenerator(path, tplText, WithMetas(metas))
 	if err != nil {
 		fmt.Println(err.Error())
 		return

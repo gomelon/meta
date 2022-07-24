@@ -10,14 +10,14 @@ import (
 
 type functions struct {
 	importTracker ImportTracker
-	metaParser    *MetaParser
+	metaParser    *Parser
 	packageParser *PackageParser
 	pkg           *packages.Package
 	pkgPath       string
 	typeQualifier types.Qualifier
 }
 
-func newFunctions(packageParser *PackageParser, metaParser *MetaParser,
+func newFunctions(packageParser *PackageParser, metaParser *Parser,
 	importTracker ImportTracker, pkgPath string) *functions {
 
 	return &functions{
