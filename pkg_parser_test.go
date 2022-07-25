@@ -29,13 +29,13 @@ func TestLoad(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			packageParser := NewPackageParser()
-			err := packageParser.Load(tt.args.loadPackagePaths...)
+			pkgParser := NewPkgParser()
+			err := pkgParser.Load(tt.args.loadPackagePaths...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			got := packageParser.ObjectByPkgPathAndName(tt.args.findPackagePath, tt.args.findTypeName)
+			got := pkgParser.ObjectByPkgPathAndName(tt.args.findPackagePath, tt.args.findTypeName)
 			if (got != nil) != tt.wantFound {
 				t.Errorf("Load() then ObjectByPkgPathAndName(%v,%v), want %v",
 					tt.args.findPackagePath, tt.args.findTypeName, tt.wantFound)
@@ -67,9 +67,9 @@ func TestPackagesHelper_FindType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			packageParser := NewPackageParser()
-			_ = packageParser.Load(tt.args.loadPackagePaths...)
-			got := packageParser.ObjectByPkgPathAndName(tt.args.findPackagePath, tt.args.findTypeName)
+			pkgParser := NewPkgParser()
+			_ = pkgParser.Load(tt.args.loadPackagePaths...)
+			got := pkgParser.ObjectByPkgPathAndName(tt.args.findPackagePath, tt.args.findTypeName)
 			if (got != nil) != tt.wantFound {
 				t.Errorf("ObjectByPkgPathAndName(%v,%v) wantFound %v",
 					tt.args.findPackagePath, tt.args.findTypeName, tt.wantFound)
@@ -78,7 +78,7 @@ func TestPackagesHelper_FindType(t *testing.T) {
 	}
 }
 
-func TestPackageParser_AssignableTo(t *testing.T) {
+func TestPkgParser_AssignableTo(t *testing.T) {
 	type args struct {
 		vPkgPath, vName string
 		tPkgPath, tName string
@@ -141,10 +141,10 @@ func TestPackageParser_AssignableTo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			packageParser := NewPackageParser()
-			vType := packageParser.ObjectByPkgPathAndName(tt.args.vPkgPath, tt.args.vName).Type()
-			tType := packageParser.ObjectByPkgPathAndName(tt.args.tPkgPath, tt.args.tName).Type()
-			if got := packageParser.AssignableTo(vType, tType); got != tt.want {
+			pkgParser := NewPkgParser()
+			vType := pkgParser.ObjectByPkgPathAndName(tt.args.vPkgPath, tt.args.vName).Type()
+			tType := pkgParser.ObjectByPkgPathAndName(tt.args.tPkgPath, tt.args.tName).Type()
+			if got := pkgParser.AssignableTo(vType, tType); got != tt.want {
 				t.Errorf("AssignableTo() = %v, want %v", got, tt.want)
 			}
 		})

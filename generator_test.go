@@ -2,7 +2,6 @@ package meta
 
 import (
 	"fmt"
-	"github.com/antonmedv/expr"
 	"os"
 	"testing"
 )
@@ -21,12 +20,11 @@ var tplText = `
 {{end}}
 `
 
-func TestTemplateGen(t *testing.T) {
+func TestTmplGenerate(t *testing.T) {
 
 	workdir, _ := os.Getwd()
 	path := workdir + "/testdata"
-	metas := []Meta{&Table{}}
-	generator, err := NewTplPkgGenerator(path, tplText, WithMetas(metas))
+	generator, err := NewTplPkgGenerator(path, tplText)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -39,8 +37,16 @@ func TestTemplateGen(t *testing.T) {
 	}
 }
 
-func TestName(t *testing.T) {
-	program, _ := expr.Compile("1==1")
-	output, _ := expr.Run(program, map[string]any{})
-	fmt.Println(output == true)
+func TestScanToTmplGenerate(t *testing.T) {
+
+	workdir, _ := os.Getwd()
+
+	err := Scan(workdir).
+		TemplateText(tplText).Patterns("testdata").Build().
+		Generate()
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
 }

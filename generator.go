@@ -7,187 +7,169 @@ import (
 	"golang.org/x/tools/imports"
 	"io"
 	"os"
-	"strings"
+	"path/filepath"
 	"text/template"
 )
 
-func ScanToGenerate() error {
-	return nil
-}
-
-type PkgGenerator interface {
-	Path() string
-	PkgPath() string
-	PackageParser() *PackageParser
-	MetaParser() *Parser
-	PkgFunctions() *functions
-	ImportTracker() ImportTracker
-	Metas() []Meta
-	GetMetaNames() []string
-	Write(writer io.Writer) error
-	Print() error
-	Generate() error
-}
-
-type TplPkgGenerator struct {
+type TmplPkgGenerator struct {
 	path            string
 	pkgPath         string
-	metas           []Meta
-	packageParser   *PackageParser
+	pkgParser       *PkgParser
 	metaParser      *Parser
 	pkgFunctions    *functions
 	importTracker   ImportTracker
-	funcMapProvider func(generator *TplPkgGenerator) map[string]any
+	funcMapProvider func(generator *TmplPkgGenerator) map[string]any
 	tpl             *template.Template
 
-	outputFilePrefix string
-	outputFileSuffix string
-	outputFileName   string
+	outputFilePrefix   string
+	outputFileSuffix   string
+	outputFilename     string
+	outputFullFilename string
 }
 
-func NewTplPkgGenerator(path string, templateText string, options ...TGOption) (tplPkgGen PkgGenerator, err error) {
+func NewTplPkgGenerator(path string, templateText string, options ...TPGOption) (gen *TmplPkgGenerator, err error) {
 
-	tplPkgGenImpl := &TplPkgGenerator{
-		metas: []Meta{},
-		funcMapProvider: func(generator *TplPkgGenerator) map[string]any {
-			return map[string]any{}
-		},
-		outputFilePrefix: "zz_",
-		outputFileSuffix: "_gen",
+	gen = &TmplPkgGenerator{
+		path:             path,
+		outputFilePrefix: DefaultOutputFilePrefix,
+		outputFileSuffix: DefaultOutputFileSuffix,
 	}
-	tplPkgGenImpl.path = path
+
 	for _, option := range options {
-		option(tplPkgGenImpl)
+		option(gen)
 	}
 
-	if tplPkgGenImpl.packageParser == nil {
-		tplPkgGenImpl.packageParser = NewPackageParser()
+	if gen.metaParser == nil {
+		if gen.pkgParser == nil {
+			gen.metaParser = defaultParser
+		} else {
+			gen.metaParser = NewParser(gen.pkgParser)
+		}
 	}
 
-	if tplPkgGenImpl.metaParser == nil {
-		tplPkgGenImpl.metaParser = NewParser(tplPkgGenImpl.packageParser, tplPkgGenImpl.pkgPath)
+	if gen.pkgParser == nil {
+		gen.pkgParser = defaultPkgParser
 	}
-	tplPkgGenImpl.metaParser.AddMeta(tplPkgGenImpl.metas...)
 
-	err = tplPkgGenImpl.packageParser.Load(path)
+	if gen.funcMapProvider == nil {
+		gen.funcMapProvider = func(generator *TmplPkgGenerator) map[string]any {
+			return map[string]any{}
+		}
+	}
+
+	err = gen.pkgParser.Load(path)
 	if err != nil {
-		return nil, err
+		return
 	}
-	tplPkgGenImpl.pkgPath = tplPkgGenImpl.packageParser.PkgPath(path)
+	gen.pkgPath = gen.pkgParser.PkgPath(path)
 
-	if tplPkgGenImpl.importTracker == nil {
-		tplPkgGenImpl.importTracker = NewDefaultImportTracker(tplPkgGenImpl.pkgPath)
+	if gen.importTracker == nil {
+		gen.importTracker = NewDefaultImportTracker(gen.pkgPath)
 	}
 
-	functions := newFunctions(tplPkgGenImpl.packageParser, tplPkgGenImpl.metaParser, tplPkgGenImpl.importTracker, tplPkgGenImpl.pkgPath)
-	tplPkgGenImpl.pkgFunctions = functions
+	functions := newFunctions(gen.pkgParser, gen.metaParser, gen.importTracker, gen.pkgPath)
+	gen.pkgFunctions = functions
 
 	tpl, err := template.New("TemplateGen").
 		Funcs(sprig.GenericFuncMap()).
 		Funcs(functions.FuncMap()).
-		Funcs(tplPkgGenImpl.funcMapProvider(tplPkgGenImpl)).
+		Funcs(gen.funcMapProvider(gen)).
 		Parse(templateText)
-
-	if err != nil {
-		return
-	}
-	tplPkgGenImpl.tpl = tpl
-	tplPkgGen = tplPkgGenImpl
+	gen.tpl = tpl
 	return
 }
 
-type TGOption func(gen *TplPkgGenerator)
+type TPGOption func(gen *TmplPkgGenerator)
 
-func WithPackageParser(packageParser *PackageParser) TGOption {
-	return func(gen *TplPkgGenerator) {
-		gen.packageParser = packageParser
+func WithPkgParser(pkgParser *PkgParser) TPGOption {
+	return func(gen *TmplPkgGenerator) {
+		gen.pkgParser = pkgParser
 	}
 }
 
-func WithMetaParser(metaParser *Parser) TGOption {
-	return func(gen *TplPkgGenerator) {
+func WithMetaParser(metaParser *Parser) TPGOption {
+	return func(gen *TmplPkgGenerator) {
 		gen.metaParser = metaParser
 	}
 }
 
-func WithMetas(metas []Meta) TGOption {
-	return func(gen *TplPkgGenerator) {
-		gen.metas = metas
-	}
-}
-
-func WithImportTracker(tracker ImportTracker) TGOption {
-	return func(gen *TplPkgGenerator) {
+func WithImportTracker(tracker ImportTracker) TPGOption {
+	return func(gen *TmplPkgGenerator) {
 		gen.importTracker = tracker
 	}
 }
 
-func WithFuncMapProvider(provider func(generator *TplPkgGenerator) map[string]any) TGOption {
-	return func(gen *TplPkgGenerator) {
+func WithFuncMapProvider(provider func(generator *TmplPkgGenerator) map[string]any) TPGOption {
+	return func(gen *TmplPkgGenerator) {
 		gen.funcMapProvider = provider
 	}
 }
 
-func WithOutputFilePrefix(prefix string) TGOption {
-	return func(gen *TplPkgGenerator) {
+func WithOutputFilePrefix(prefix string) TPGOption {
+	return func(gen *TmplPkgGenerator) {
 		gen.outputFilePrefix = prefix
 	}
 }
 
-func (gen *TplPkgGenerator) Path() string {
+func WithOutputFileSuffix(suffix string) TPGOption {
+	return func(gen *TmplPkgGenerator) {
+		gen.outputFileSuffix = suffix
+	}
+}
+
+func WithOutputFilename(filename string) TPGOption {
+	return func(gen *TmplPkgGenerator) {
+		gen.outputFilename = filename
+	}
+}
+
+func WithOutputFullFilename(fullFilename string) TPGOption {
+	return func(gen *TmplPkgGenerator) {
+		gen.outputFullFilename = fullFilename
+	}
+}
+
+func (gen *TmplPkgGenerator) Path() string {
 	return gen.path
 }
 
-func (gen *TplPkgGenerator) PkgPath() string {
+func (gen *TmplPkgGenerator) PkgPath() string {
 	return gen.pkgPath
 }
 
-func (gen *TplPkgGenerator) PackageParser() *PackageParser {
-	return gen.packageParser
+func (gen *TmplPkgGenerator) PkgParser() *PkgParser {
+	return gen.pkgParser
 }
 
-func (gen *TplPkgGenerator) MetaParser() *Parser {
+func (gen *TmplPkgGenerator) MetaParser() *Parser {
 	return gen.metaParser
 }
 
-func (gen *TplPkgGenerator) PkgFunctions() *functions {
+func (gen *TmplPkgGenerator) PkgFunctions() *functions {
 	return gen.pkgFunctions
 }
 
-func (gen *TplPkgGenerator) ImportTracker() ImportTracker {
+func (gen *TmplPkgGenerator) ImportTracker() ImportTracker {
 	return gen.importTracker
 }
 
-func (gen *TplPkgGenerator) Metas() []Meta {
-	return gen.metas
-}
-
-func (gen *TplPkgGenerator) GetMetaNames() []string {
-	metas := gen.metas
-	metaNames := make([]string, 0, len(metas))
-	for _, meta := range metas {
-		metaNames = append(metaNames, meta.Directive())
-	}
-	return metaNames
-}
-
-func (gen *TplPkgGenerator) Bytes() ([]byte, error) {
+func (gen *TmplPkgGenerator) Bytes() ([]byte, error) {
 	buffer := bytes.NewBuffer([]byte{})
 	err := gen.generate(buffer)
 	return buffer.Bytes(), err
 }
 
-func (gen *TplPkgGenerator) Write(writer io.Writer) error {
+func (gen *TmplPkgGenerator) Write(writer io.Writer) error {
 	err := gen.generate(writer)
 	return err
 }
 
-func (gen *TplPkgGenerator) Print() error {
+func (gen *TmplPkgGenerator) Print() error {
 	err := gen.generate(os.Stdout)
 	return err
 }
 
-func (gen *TplPkgGenerator) Generate() error {
+func (gen *TmplPkgGenerator) Generate() error {
 	file, err := os.Create(gen.outputFile())
 	if err != nil {
 		return err
@@ -195,7 +177,7 @@ func (gen *TplPkgGenerator) Generate() error {
 	return gen.generate(file)
 }
 
-func (gen *TplPkgGenerator) generate(writer io.Writer) (err error) {
+func (gen *TmplPkgGenerator) generate(writer io.Writer) (err error) {
 
 	bodyBuf := bytes.NewBuffer(make([]byte, 0, 1024))
 	err = gen.tpl.Execute(bodyBuf, map[string]any{})
@@ -222,36 +204,28 @@ func (gen *TplPkgGenerator) generate(writer io.Writer) (err error) {
 	return
 }
 
-func (gen *TplPkgGenerator) outputFile() string {
-	pkg := gen.packageParser.Package(gen.pkgPath)
-	outputFileName := gen.outputFileName
-	if len(outputFileName) == 0 {
-		if len(gen.metas) > 0 {
-			directiveParts := strings.Split(gen.metas[0].Directive(), ":")
-			if len(directiveParts) > 1 {
-				outputFileName = strings.Join(directiveParts[:len(directiveParts)-1], "_")
-			} else {
-				outputFileName = directiveParts[0]
-			}
+func (gen *TmplPkgGenerator) outputFile() string {
+	pkg := gen.pkgParser.Package(gen.pkgPath)
+	outputFullFilename := gen.outputFullFilename
+	if len(outputFullFilename) == 0 {
+		if len(gen.outputFilename) == 0 {
+			outputFullFilename = gen.outputFilePrefix + pkg.Name + gen.outputFileSuffix
 		} else {
-			outputFileName = pkg.Name
+			outputFullFilename = gen.outputFilePrefix + gen.outputFilename + gen.outputFileSuffix
 		}
-		outputFileName = gen.outputFilePrefix + outputFileName + gen.outputFileSuffix
 	}
 
-	return fmt.Sprintf("%s/%s.go", gen.path, outputFileName)
+	return fmt.Sprintf("%s%s%s.go", gen.path, string(filepath.Separator), outputFullFilename)
 }
 
-func (gen *TplPkgGenerator) writerHeader(writer *bytes.Buffer) {
-	gen.writeBuildTag(writer)
+func (gen *TmplPkgGenerator) writerHeader(writer *bytes.Buffer) {
+	//gen.writeBuildTag(writer)
 	gen.writePackage(writer)
 	gen.writeImports(writer)
 }
 
-func (gen *TplPkgGenerator) writeBuildTag(writer *bytes.Buffer) {
-	metaNames := strings.Join(gen.GetMetaNames(), ",")
-	comment := fmt.Sprintf(GeneratedComment, metaNames)
-	_, _ = writer.WriteString(comment)
+func (gen *TmplPkgGenerator) writeBuildTag(writer *bytes.Buffer) {
+	_, _ = writer.WriteString(GeneratedBuildTag)
 	_, _ = writer.WriteString("\n\n")
 
 	buildTag := fmt.Sprintf("//+build !%s\n\n", GeneratedBuildTag)
@@ -259,14 +233,14 @@ func (gen *TplPkgGenerator) writeBuildTag(writer *bytes.Buffer) {
 	_, _ = writer.WriteString("\n\n")
 }
 
-func (gen *TplPkgGenerator) writePackage(writer *bytes.Buffer) {
-	pkg := gen.packageParser.Package(gen.pkgPath)
+func (gen *TmplPkgGenerator) writePackage(writer *bytes.Buffer) {
+	pkg := gen.pkgParser.Package(gen.pkgPath)
 	_, _ = writer.WriteString("package ")
 	_, _ = writer.WriteString(pkg.Name)
 	_, _ = writer.WriteRune('\n')
 }
 
-func (gen *TplPkgGenerator) writeImports(writer *bytes.Buffer) {
+func (gen *TmplPkgGenerator) writeImports(writer *bytes.Buffer) {
 	lines := gen.importTracker.ImportLines()
 
 	if len(lines) == 0 {

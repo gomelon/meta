@@ -11,20 +11,20 @@ import (
 type functions struct {
 	importTracker ImportTracker
 	metaParser    *Parser
-	packageParser *PackageParser
+	pkgParser     *PkgParser
 	pkg           *packages.Package
 	pkgPath       string
 	typeQualifier types.Qualifier
 }
 
-func newFunctions(packageParser *PackageParser, metaParser *Parser,
+func newFunctions(pkgParser *PkgParser, metaParser *Parser,
 	importTracker ImportTracker, pkgPath string) *functions {
 
 	return &functions{
 		importTracker: importTracker,
 		metaParser:    metaParser,
-		packageParser: packageParser,
-		pkg:           packageParser.Package(pkgPath),
+		pkgParser:     pkgParser,
+		pkg:           pkgParser.Package(pkgPath),
 		pkgPath:       pkgPath,
 		typeQualifier: func(p *types.Package) string {
 			return importTracker.Import(p.Path())
@@ -90,15 +90,15 @@ func (f *functions) Package() *packages.Package {
 }
 
 func (f *functions) ObjectByPkgPathAndName(pkgPath, typeName string) types.Object {
-	return f.packageParser.ObjectByPkgPathAndName(pkgPath, typeName)
+	return f.pkgParser.ObjectByPkgPathAndName(pkgPath, typeName)
 }
 
 func (f *functions) AssignableToCtx(v types.Type) bool {
-	return f.packageParser.AssignableToCtx(v)
+	return f.pkgParser.AssignableToCtx(v)
 }
 
 func (f *functions) AssignableTo(v, t types.Type) bool {
-	return f.packageParser.AssignableTo(v, t)
+	return f.pkgParser.AssignableTo(v, t)
 }
 
 func (f *functions) Exported(object types.Object) bool {
@@ -106,7 +106,7 @@ func (f *functions) Exported(object types.Object) bool {
 }
 
 func (f *functions) ObjectPlace(object types.Object) Place {
-	return f.packageParser.ObjectPlace(object)
+	return f.pkgParser.ObjectPlace(object)
 }
 
 func (f *functions) ObjectType(object types.Object) types.Type {
@@ -114,11 +114,11 @@ func (f *functions) ObjectType(object types.Object) types.Type {
 }
 
 func (f *functions) TypeName(typ types.Type) string {
-	return f.packageParser.TypeName(typ)
+	return f.pkgParser.TypeName(typ)
 }
 
 func (f *functions) UnderlyingType(typ types.Type) types.Type {
-	return f.packageParser.UnderlyingType(typ)
+	return f.pkgParser.UnderlyingType(typ)
 }
 
 func (f *functions) Structs() []types.Object {
@@ -130,39 +130,39 @@ func (f *functions) Interfaces() []types.Object {
 }
 
 func (f *functions) Methods(object types.Object) []types.Object {
-	return f.packageParser.Methods(object)
+	return f.pkgParser.Methods(object)
 }
 
 func (f *functions) InterfaceMethods(object types.Object) []types.Object {
-	return f.packageParser.InterfaceMethods(object)
+	return f.pkgParser.InterfaceMethods(object)
 }
 
 func (f *functions) StructMethods(object types.Object) []types.Object {
-	return f.packageParser.StructMethods(object)
+	return f.pkgParser.StructMethods(object)
 }
 
 func (f *functions) Params(methodOrFunc types.Object) []types.Object {
-	return f.packageParser.Params(methodOrFunc)
+	return f.pkgParser.Params(methodOrFunc)
 }
 
 func (f *functions) FirstParam(methodOrFunc types.Object) types.Object {
-	return f.packageParser.FirstParam(methodOrFunc)
+	return f.pkgParser.FirstParam(methodOrFunc)
 }
 
 func (f *functions) Results(methodOrFunc types.Object) []types.Object {
-	return f.packageParser.Results(methodOrFunc)
+	return f.pkgParser.Results(methodOrFunc)
 }
 
 func (f *functions) FirstResult(methodOrFunc types.Object) types.Object {
-	return f.packageParser.FirstResult(methodOrFunc)
+	return f.pkgParser.FirstResult(methodOrFunc)
 }
 
 func (f *functions) LastResult(methodOrFunc types.Object) types.Object {
-	return f.packageParser.LastResult(methodOrFunc)
+	return f.pkgParser.LastResult(methodOrFunc)
 }
 
 func (f *functions) HasErrorResult(methodOrFunc types.Object) bool {
-	return f.packageParser.HasErrorResult(methodOrFunc)
+	return f.pkgParser.HasErrorResult(methodOrFunc)
 }
 
 func (f *functions) FilterByMeta(metaName string, objects []types.Object) []types.Object {
@@ -235,7 +235,7 @@ func (f *functions) FilterObjects(filterFuncName string, objects []types.Object)
 }
 
 func (f *functions) Indirect(typ types.Type) types.Type {
-	return f.packageParser.Indirect(typ)
+	return f.pkgParser.Indirect(typ)
 }
 
 func (f *functions) Declare(object types.Object) string {
@@ -352,7 +352,7 @@ func (f *functions) filterByPlace(place Place) []types.Object {
 	var result []types.Object
 	for _, typeName := range scope.Names() {
 		object := scope.Lookup(typeName)
-		objectPlace := f.packageParser.ObjectPlace(object)
+		objectPlace := f.pkgParser.ObjectPlace(object)
 		if objectPlace&place > 0 {
 			result = append(result, object)
 		}

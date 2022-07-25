@@ -1,44 +1,32 @@
 package meta
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/google/shlex"
 	"go/token"
 	"go/types"
-	"golang.org/x/tools/go/packages"
-	"reflect"
 	"strings"
 )
 
+var defaultParser = NewParser(defaultPkgParser)
+
 type Parser struct {
-	packageParser            *PackageParser
-	pkg                      *packages.Package
-	pkgPath                  string
+	pkgParser                *PkgParser
 	objectToParsedMetaGroups map[types.Object]map[string]Group
-	metaNameToMeta           map[string]Meta
 }
 
-func NewParser(packageParser *PackageParser, pkgPath string) *Parser {
+func NewParser(pkgParser *PkgParser) *Parser {
 	return &Parser{
-		packageParser:            packageParser,
-		pkg:                      packageParser.Package(pkgPath),
-		pkgPath:                  pkgPath,
+		pkgParser:                pkgParser,
 		objectToParsedMetaGroups: map[types.Object]map[string]Group{},
-		metaNameToMeta:           make(map[string]Meta, 0),
 	}
 }
 
-func (parser *Parser) AddMeta(metas ...Meta) {
-	for _, meta := range metas {
-		parser.metaNameToMeta[meta.Directive()] = meta
-	}
-}
+func (parser *Parser) FindByMetaName(pkgPath string, metaNames ...string) map[types.Object]map[string]Group {
 
-func (parser *Parser) FindByMetaName(metaNames ...string) map[types.Object]map[string]Group {
-
+	pkg := parser.pkgParser.Package(pkgPath)
 	objectToMetas := map[types.Object]map[string]Group{}
-	scope := parser.pkg.Types.Scope()
+	scope := pkg.Types.Scope()
 	for _, typeName := range scope.Names() {
 		object := scope.Lookup(typeName)
 		var objectMetas map[string]Group
@@ -63,16 +51,6 @@ func (parser *Parser) ObjectMetaGroups(object types.Object, metaNames ...string)
 }
 
 func (parser *Parser) ObjectMetaGroup(object types.Object, metaName string) (parsedMetaGroup Group) {
-	meta, ok := parser.metaNameToMeta[metaName]
-	if !ok {
-		return
-	}
-
-	objectPlace := parser.packageParser.ObjectPlace(object)
-	if meta.PlaceAt()&objectPlace == 0 {
-		return
-	}
-
 	metaNameToParsedMetaGroup, ok := parser.objectToParsedMetaGroups[object]
 	if ok {
 		parsedMetaGroup, ok = metaNameToParsedMetaGroup[metaName]
@@ -86,7 +64,7 @@ func (parser *Parser) ObjectMetaGroup(object types.Object, metaName string) (par
 	}
 
 	for _, comment := range comments {
-		parsedMeta := parser.populateMetaFields(meta, comment)
+		parsedMeta := parser.populateMetaFields(metaName, comment)
 		parsedMetaGroup = append(parsedMetaGroup, parsedMeta)
 	}
 	if metaNameToParsedMetaGroup == nil {
@@ -99,7 +77,7 @@ func (parser *Parser) ObjectMetaGroup(object types.Object, metaName string) (par
 
 func (parser *Parser) filterComments(pos token.Pos, metaName string) []string {
 	var filteredComments []string
-	comments := parser.packageParser.Comments(pos)
+	comments := parser.pkgParser.Comments(pos)
 	for _, comment := range comments {
 		if strings.HasPrefix(comment, metaName) {
 			filteredComments = append(filteredComments, comment)
@@ -108,31 +86,24 @@ func (parser *Parser) filterComments(pos token.Pos, metaName string) []string {
 	return filteredComments
 }
 
-func (parser *Parser) populateMetaFields(meta Meta, comment string) (parsedMeta Meta) {
-	strings.TrimLeft(comment, meta.Directive())
-	fieldAndValues, err := shlex.Split(comment)
+func (parser *Parser) populateMetaFields(metaName, comment string) (parsedMeta *Meta) {
+	propertiesStr := strings.TrimLeft(comment, metaName)
+	fieldAndValues, err := shlex.Split(propertiesStr)
 	if err != nil {
 		panic(fmt.Errorf("meta parse fail: %w", err))
 	}
-	typeOfMeta := reflect.Indirect(reflect.ValueOf(meta)).Type()
-	newMeta := reflect.New(typeOfMeta)
 
-	kv := make(map[string]any, typeOfMeta.NumField()*2)
-	//first is meta prefix, must ignore
-	for _, fieldAndValue := range fieldAndValues[1:] {
+	properties := make(map[string]string, len(fieldAndValues))
+	for _, fieldAndValue := range fieldAndValues {
 		parts := strings.SplitN(fieldAndValue, "=", 2)
 		if len(parts) == 1 {
-			kv[parts[0]] = "true"
+			properties[fieldAndValue] = fieldAndValue
 		} else {
-			kv[parts[0]] = parts[1]
+			properties[parts[0]] = parts[1]
 		}
 	}
 
-	marshal, _ := json.Marshal(kv)
-	err = json.Unmarshal(marshal, newMeta.Interface())
-	if err != nil {
-		panic(fmt.Errorf("meta parse fail: %w", err))
-	}
-	parsedMeta = newMeta.Interface().(Meta)
-	return
+	meta := New(metaName)
+	meta.SetProperties(properties)
+	return meta
 }

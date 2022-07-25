@@ -29,7 +29,9 @@ const (
 	PlaceFuncVar //func/method param or result, because can't distinguish on named result
 )
 
-type PackageParser struct {
+var defaultPkgParser = NewPkgParser()
+
+type PkgParser struct {
 	pkgPathToPkg         map[string]*packages.Package
 	importedPkgPathToPkg map[string]*packages.Package
 	posToComments        sync.Map // key=types.Object.Pos(),value=Comments []string
@@ -41,8 +43,8 @@ type PackageParser struct {
 	fileParsingLock      sync.Map //key=string,value=*sync.Mutex
 }
 
-func NewPackageParser() *PackageParser {
-	return &PackageParser{
+func NewPkgParser() *PkgParser {
+	return &PkgParser{
 		pkgPathToPkg:         map[string]*packages.Package{},
 		importedPkgPathToPkg: map[string]*packages.Package{},
 		pathToPkgPath:        map[string]string{},
@@ -52,7 +54,7 @@ func NewPackageParser() *PackageParser {
 }
 
 //Load path, path may be relative path/absolute path/package path
-func (pp *PackageParser) Load(paths ...string) (err error) {
+func (pp *PkgParser) Load(paths ...string) (err error) {
 
 	unloadedPaths := make([]string, 0, len(paths))
 	for _, inputPath := range paths {
@@ -72,11 +74,10 @@ func (pp *PackageParser) Load(paths ...string) (err error) {
 	cfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles |
 			packages.NeedImports | packages.NeedTypes | packages.NeedSyntax,
-		//TODO 如果其它地方的代码有依赖生成的文件,但又不加入解析,是否有问题?
-		BuildFlags: []string{"-tags", GeneratedBuildTag},
-		Fset:       pp.fileSet,
-		ParseFile:  pp.parseFile,
-		Tests:      false,
+		//BuildFlags: []string{"-tags", GeneratedBuildTag},
+		Fset:      pp.fileSet,
+		ParseFile: pp.parseFile,
+		Tests:     false,
 	}
 
 	packageList, err := packages.Load(cfg, unloadedPaths...)
@@ -100,7 +101,7 @@ func (pp *PackageParser) Load(paths ...string) (err error) {
 	return
 }
 
-func (pp *PackageParser) Package(pkgPath string) *packages.Package {
+func (pp *PkgParser) Package(pkgPath string) *packages.Package {
 	pkg := pp.pkgPathToPkg[pkgPath]
 	if pkg == nil {
 		pkg = pp.importedPkgPathToPkg[pkgPath]
@@ -108,15 +109,15 @@ func (pp *PackageParser) Package(pkgPath string) *packages.Package {
 	return pkg
 }
 
-func (pp *PackageParser) Path(pkgPath string) string {
+func (pp *PkgParser) Path(pkgPath string) string {
 	return pp.pkgPathToPath[pkgPath]
 }
 
-func (pp *PackageParser) PkgPath(path string) string {
+func (pp *PkgParser) PkgPath(path string) string {
 	return pp.pathToPkgPath[path]
 }
 
-func (pp *PackageParser) ObjectByPkgPathAndName(pkgPath, typeName string) types.Object {
+func (pp *PkgParser) ObjectByPkgPathAndName(pkgPath, typeName string) types.Object {
 	err := pp.Load(pkgPath)
 	if err != nil {
 		panic(fmt.Errorf("can't load pakcage %s", pkgPath))
@@ -130,7 +131,7 @@ func (pp *PackageParser) ObjectByPkgPathAndName(pkgPath, typeName string) types.
 
 // AssignableToCtx reports whether a value of type V is assignable to context.Context.
 // The behavior of AssignableTo is undefined if V or T is an uninstantiated generic type.
-func (pp *PackageParser) AssignableToCtx(v types.Type) bool {
+func (pp *PkgParser) AssignableToCtx(v types.Type) bool {
 	if v.String() == "context.Context" {
 		return true
 	}
@@ -141,7 +142,7 @@ func (pp *PackageParser) AssignableToCtx(v types.Type) bool {
 // AssignableTo reports whether a value of type V is assignable to a variable of type T.
 // The behavior of AssignableTo is undefined if V or T is an uninstantiated generic type.
 //TODO This has performance problems, and subsequent optimization needs to be done, using cache?
-func (pp *PackageParser) AssignableTo(v, t types.Type) bool {
+func (pp *PkgParser) AssignableTo(v, t types.Type) bool {
 	if pp.TypeName(t) == TypeNameNamed {
 		t = t.Underlying()
 	}
@@ -156,7 +157,7 @@ func (pp *PackageParser) AssignableTo(v, t types.Type) bool {
 	return v.String() == t.String() || types.AssignableTo(vObject.Type(), t)
 }
 
-func (pp *PackageParser) Methods(object types.Object) []types.Object {
+func (pp *PkgParser) Methods(object types.Object) []types.Object {
 	switch pp.ObjectPlace(object) {
 	case PlaceInterface:
 		return pp.InterfaceMethods(object)
@@ -167,7 +168,7 @@ func (pp *PackageParser) Methods(object types.Object) []types.Object {
 	}
 }
 
-func (pp *PackageParser) InterfaceMethods(object types.Object) []types.Object {
+func (pp *PkgParser) InterfaceMethods(object types.Object) []types.Object {
 	itf := object.Type().Underlying().(*types.Interface)
 	numMethods := itf.NumMethods()
 	methods := make([]types.Object, 0, numMethods)
@@ -177,7 +178,7 @@ func (pp *PackageParser) InterfaceMethods(object types.Object) []types.Object {
 	return methods
 }
 
-func (pp *PackageParser) StructMethods(object types.Object) []types.Object {
+func (pp *PkgParser) StructMethods(object types.Object) []types.Object {
 	namedObject := object.Type().(*types.Named)
 	numMethods := namedObject.NumMethods()
 	methods := make([]types.Object, 0, numMethods)
@@ -187,7 +188,7 @@ func (pp *PackageParser) StructMethods(object types.Object) []types.Object {
 	return methods
 }
 
-func (pp *PackageParser) Params(methodOrFunc types.Object) []types.Object {
+func (pp *PkgParser) Params(methodOrFunc types.Object) []types.Object {
 	signature, ok := methodOrFunc.Type().(*types.Signature)
 	if !ok {
 		panic(fmt.Errorf("package parser: object isn't a method [object=%s]", methodOrFunc.Name()))
@@ -202,7 +203,7 @@ func (pp *PackageParser) Params(methodOrFunc types.Object) []types.Object {
 	return result
 }
 
-func (pp *PackageParser) FirstParam(methodOrFunc types.Object) types.Object {
+func (pp *PkgParser) FirstParam(methodOrFunc types.Object) types.Object {
 	params := pp.Params(methodOrFunc)
 	if len(params) == 0 {
 		return nil
@@ -210,7 +211,7 @@ func (pp *PackageParser) FirstParam(methodOrFunc types.Object) types.Object {
 	return params[0]
 }
 
-func (pp *PackageParser) Results(methodOrFunc types.Object) []types.Object {
+func (pp *PkgParser) Results(methodOrFunc types.Object) []types.Object {
 	signature, ok := methodOrFunc.Type().(*types.Signature)
 	if !ok {
 		panic(fmt.Errorf("package parser: object isn't a method [object=%s]", methodOrFunc.Name()))
@@ -225,7 +226,7 @@ func (pp *PackageParser) Results(methodOrFunc types.Object) []types.Object {
 	return result
 }
 
-func (pp *PackageParser) FirstResult(methodOrFunc types.Object) types.Object {
+func (pp *PkgParser) FirstResult(methodOrFunc types.Object) types.Object {
 	results := pp.Results(methodOrFunc)
 	if len(results) == 0 {
 		return nil
@@ -233,7 +234,7 @@ func (pp *PackageParser) FirstResult(methodOrFunc types.Object) types.Object {
 	return results[0]
 }
 
-func (pp *PackageParser) LastResult(methodOrFunc types.Object) types.Object {
+func (pp *PkgParser) LastResult(methodOrFunc types.Object) types.Object {
 	results := pp.Results(methodOrFunc)
 	if len(results) == 0 {
 		return nil
@@ -241,7 +242,7 @@ func (pp *PackageParser) LastResult(methodOrFunc types.Object) types.Object {
 	return results[len(results)-1]
 }
 
-func (pp *PackageParser) HasErrorResult(methodOrFunc types.Object) bool {
+func (pp *PkgParser) HasErrorResult(methodOrFunc types.Object) bool {
 	lastResult := pp.LastResult(methodOrFunc)
 	if lastResult == nil {
 		return false
@@ -249,12 +250,12 @@ func (pp *PackageParser) HasErrorResult(methodOrFunc types.Object) bool {
 	return lastResult.Type().String() == "error"
 }
 
-func (pp *PackageParser) Indirect(typ types.Type) types.Type {
+func (pp *PkgParser) Indirect(typ types.Type) types.Type {
 	pointer := typ.(*types.Pointer)
 	return pointer.Elem().(types.Type)
 }
 
-func (pp *PackageParser) ObjectPlace(object types.Object) (objectPlace Place) {
+func (pp *PkgParser) ObjectPlace(object types.Object) (objectPlace Place) {
 	objectPlaceValue, ok := pp.objectToPlace.Load(object)
 	if ok {
 		objectPlace = objectPlaceValue.(Place)
@@ -327,7 +328,7 @@ const (
 	TypeNameChan      = "Chan"
 )
 
-func (pp *PackageParser) TypeName(typ types.Type) string {
+func (pp *PkgParser) TypeName(typ types.Type) string {
 	var typName string
 	switch typ := typ.(type) {
 	case *types.Pointer:
@@ -358,7 +359,7 @@ func (pp *PackageParser) TypeName(typ types.Type) string {
 	return typName
 }
 
-func (pp *PackageParser) UnderlyingType(typ types.Type) types.Type {
+func (pp *PkgParser) UnderlyingType(typ types.Type) types.Type {
 	switch typ := typ.(type) {
 	case *types.Basic, *types.Struct, *types.Interface, *types.Chan, *types.Signature:
 		return typ
@@ -375,7 +376,7 @@ func (pp *PackageParser) UnderlyingType(typ types.Type) types.Type {
 	}
 }
 
-func (pp *PackageParser) Comments(pos token.Pos) []string {
+func (pp *PkgParser) Comments(pos token.Pos) []string {
 	value, ok := pp.posToComments.Load(pos)
 	if !ok {
 		return []string{}
@@ -383,7 +384,7 @@ func (pp *PackageParser) Comments(pos token.Pos) []string {
 	return value.([]string)
 }
 
-func (pp *PackageParser) parseFile(fileSet *token.FileSet, filename string, src []byte) (astFile *ast.File, err error) {
+func (pp *PkgParser) parseFile(fileSet *token.FileSet, filename string, src []byte) (astFile *ast.File, err error) {
 	lockerObj, _ := pp.fileParsingLock.LoadOrStore(filename, &sync.Mutex{})
 	defer pp.fileParsingLock.Delete(filename)
 	locker := lockerObj.(*sync.Mutex)
@@ -412,7 +413,7 @@ func (pp *PackageParser) parseFile(fileSet *token.FileSet, filename string, src 
 	return
 }
 
-func (pp *PackageParser) doPosToComments(astFile *ast.File) error {
+func (pp *PkgParser) doPosToComments(astFile *ast.File) error {
 	commentMap := ast.NewCommentMap(pp.fileSet, astFile, astFile.Comments)
 	for astNode, commentGroups := range commentMap {
 		var nodeIdentPos token.Pos

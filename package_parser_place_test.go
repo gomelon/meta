@@ -57,11 +57,11 @@ func TestObjectTarget(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		packageParser := NewPackageParser()
-		_ = packageParser.Load(tt.args.pkgPath)
-		object := packageParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		pkgParser := NewPkgParser()
+		_ = pkgParser.Load(tt.args.pkgPath)
+		object := pkgParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		t.Run(tt.name, func(t *testing.T) {
-			if got := packageParser.ObjectPlace(object); got != tt.want {
+			if got := pkgParser.ObjectPlace(object); got != tt.want {
 				t.Errorf("ObjectPlace() = %v, want %v", got, tt.want)
 			}
 		})
@@ -88,13 +88,13 @@ func TestObjectTarget_StructField(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		packageParser := NewPackageParser()
-		_ = packageParser.Load(tt.args.pkgPath)
-		object := packageParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		pkgParser := NewPkgParser()
+		_ = pkgParser.Load(tt.args.pkgPath)
+		object := pkgParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		structObject := object.Type().Underlying().(*types.Struct)
 		fieldObject := structObject.Field(0)
 		t.Run(tt.name, func(t *testing.T) {
-			if got := packageParser.ObjectPlace(fieldObject); got != tt.want {
+			if got := pkgParser.ObjectPlace(fieldObject); got != tt.want {
 				t.Errorf("ObjectPlace() = %v, want %v", got, tt.want)
 			}
 		})
@@ -158,9 +158,9 @@ func TestObjectTarget_StructMethod(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		packageParser := NewPackageParser()
-		_ = packageParser.Load(tt.args.pkgPath)
-		object := packageParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		pkgParser := NewPkgParser()
+		_ = pkgParser.Load(tt.args.pkgPath)
+		object := pkgParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		namedObject := object.Type().(*types.Named)
 		var methodObject *types.Func
 		var paramObject *types.Var
@@ -179,17 +179,17 @@ func TestObjectTarget_StructMethod(t *testing.T) {
 			}
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			if got := packageParser.ObjectPlace(methodObject); got != wantMethodType {
+			if got := pkgParser.ObjectPlace(methodObject); got != wantMethodType {
 				t.Errorf("ObjectPlace(%v) = %v, wantMethodType %v", tt.args.methodName, got, wantMethodType)
 			}
 			if tt.args.paramIndex >= 0 {
-				if got := packageParser.ObjectPlace(paramObject); got != wantParamType {
+				if got := pkgParser.ObjectPlace(paramObject); got != wantParamType {
 					t.Errorf("ObjectPlace(%v.params[%v]) = %v, wantMethodType %v",
 						tt.args.methodName, tt.args.paramIndex, got, wantParamType)
 				}
 			}
 			if tt.args.resultIndex >= 0 {
-				if got := packageParser.ObjectPlace(resultObject); got != wantResultType {
+				if got := pkgParser.ObjectPlace(resultObject); got != wantResultType {
 					t.Errorf("ObjectPlace(%v.results[%v]) = %v, wantMethodType %v",
 						tt.args.methodName, tt.args.resultIndex, got, wantResultType)
 				}
@@ -245,9 +245,9 @@ func TestObjectTarget_InterfaceMethod(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		packageParser := NewPackageParser()
-		_ = packageParser.Load(tt.args.pkgPath)
-		object := packageParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		pkgParser := NewPkgParser()
+		_ = pkgParser.Load(tt.args.pkgPath)
+		object := pkgParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
 		itf := object.Type().Underlying().(*types.Interface)
 		var methodObject *types.Func
 		var paramObject *types.Var
@@ -267,17 +267,17 @@ func TestObjectTarget_InterfaceMethod(t *testing.T) {
 			}
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			if got := packageParser.ObjectPlace(methodObject); got != wantMethodType {
+			if got := pkgParser.ObjectPlace(methodObject); got != wantMethodType {
 				t.Errorf("ObjectPlace() = %v, want %v", got, wantMethodType)
 			}
 			if tt.args.paramIndex >= 0 {
-				if got := packageParser.ObjectPlace(paramObject); got != wantParamType {
+				if got := pkgParser.ObjectPlace(paramObject); got != wantParamType {
 					t.Errorf("ObjectPlace(%v.params[%v]) = %v, wantMethodType %v",
 						tt.args.methodName, tt.args.paramIndex, got, wantParamType)
 				}
 			}
 			if tt.args.resultIndex >= 0 {
-				if got := packageParser.ObjectPlace(resultObject); got != wantResultType {
+				if got := pkgParser.ObjectPlace(resultObject); got != wantResultType {
 					t.Errorf("ObjectPlace(%v.results[%v]) = %v, wantMethodType %v",
 						tt.args.methodName, tt.args.resultIndex, got, wantResultType)
 				}
