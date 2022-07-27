@@ -24,7 +24,7 @@ func TestTmplGenerate(t *testing.T) {
 
 	workdir, _ := os.Getwd()
 	path := workdir + "/testdata"
-	generator, err := NewTplPkgGenerator(path, tplText)
+	generator, err := NewTmplPkgGen(path, tplText)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -41,8 +41,9 @@ func TestScanToTmplGenerate(t *testing.T) {
 
 	workdir, _ := os.Getwd()
 
-	err := Scan(workdir).
-		TemplateText(tplText).Patterns("testdata").Build().
+	err := ScanFor(workdir).
+		TemplateText(tplText).RegexOr("testdata").
+		And().
 		Generate()
 
 	if err != nil {

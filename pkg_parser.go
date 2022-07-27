@@ -86,7 +86,7 @@ func (pp *PkgParser) Load(paths ...string) (err error) {
 	}
 	for _, pkg := range packageList {
 		if len(pkg.GoFiles) == 0 {
-			return fmt.Errorf("missing go file in %s", pkg.PkgPath)
+			continue
 		}
 		pp.pkgPathToPkg[pkg.PkgPath] = pkg
 		goFile := pkg.GoFiles[0]
