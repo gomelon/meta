@@ -13,8 +13,9 @@ var tplText = `
 	type {{$decorator}} struct{
 	}
 
-	{{range $method := $itf|interfaceMethods}}
+	{{range $method := $itf|methods}}
 	func (_d *{{$decorator}}) {{$method|declare}}{
+		panic("implement me")
 	}
 	{{end}}
 {{end}}

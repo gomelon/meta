@@ -36,40 +36,41 @@ func (f *functions) FuncMap() map[string]any {
 	return map[string]any{
 		"name":                       f.Name,
 		"package":                    f.Package,
-		"objectByPkgPathAndName":     f.ObjectByPkgPathAndName,
-		"assignableToCtx":            f.AssignableToCtx,
-		"assignableTo":               f.AssignableTo,
+		"objectByPkgPathAndName":     f.pkgParser.ObjectByPkgPathAndName,
+		"assignableToCtx":            f.pkgParser.AssignableToCtx,
+		"assignableTo":               f.pkgParser.AssignableTo,
+		"anonymousAssign":            f.pkgParser.AnonymousAssign,
+		"anonymousAssignTo":          f.pkgParser.AnonymousAssignTo,
 		"exported":                   f.Exported,
 		"objectPlace":                f.ObjectPlace,
 		"objectType":                 f.ObjectType,
-		"typeName":                   f.TypeName,
-		"underlyingType":             f.UnderlyingType,
+		"typeName":                   f.pkgParser.TypeName,
+		"underlyingType":             f.pkgParser.UnderlyingType,
 		"structs":                    f.Structs,
 		"interfaces":                 f.Interfaces,
-		"methods":                    f.Methods,
-		"interfaceMethods":           f.InterfaceMethods,
-		"structMethods":              f.StructMethods,
-		"params":                     f.Params,
-		"firstParam":                 f.FirstParam,
-		"results":                    f.Results,
-		"firstResult":                f.FirstResult,
-		"lastResult":                 f.LastResult,
-		"hasErrorResult":             f.HasErrorResult,
-		"filterByMeta":               f.FilterByMeta,
+		"functions":                  f.Functions,
+		"methods":                    f.pkgParser.Methods,
+		"params":                     f.pkgParser.Params,
+		"firstParam":                 f.pkgParser.FirstParam,
+		"results":                    f.pkgParser.Results,
+		"firstResult":                f.pkgParser.FirstResult,
+		"lastResult":                 f.pkgParser.LastResult,
+		"hasErrorResult":             f.pkgParser.HasErrorResult,
+		"filterByMeta":               f.metaParser.FilterByMeta,
 		"filterByMetaExpr":           f.FilterByMetaExpr,
-		"hasMeta":                    f.HasMeta,
-		"filterByMethodContainsMeta": f.FilterByMethodContainsMeta,
-		"hasMethodContainsMeta":      f.HasMethodContainsMeta,
+		"hasMeta":                    f.metaParser.HasMeta,
+		"filterByMethodContainsMeta": f.metaParser.FilterByMethodContainsMeta,
+		"hasMethodContainsMeta":      f.metaParser.HasMethodContainsMeta,
 		"filterObjects":              f.FilterObjects,
-		"indirect":                   f.Indirect,
+		"indirect":                   f.pkgParser.Indirect,
 		"declare":                    f.Declare,
 		"declareType":                f.DeclareType,
 		"typeString":                 f.TypeString,
 		"initType":                   f.InitType,
 		"methodSignature":            f.MethodSignature,
 		"import":                     f.Import,
-		"objectMetaGroups":           f.ObjectMetaGroups,
-		"objectMetaGroup":            f.ObjectMetaGroup,
+		"objectMetaGroups":           f.metaParser.ObjectMetaGroups,
+		"objectMetaGroup":            f.metaParser.ObjectMetaGroup,
 		"multipleLines":              f.MultipleLines,
 	}
 }
@@ -89,18 +90,6 @@ func (f *functions) Package() *packages.Package {
 	return f.pkg
 }
 
-func (f *functions) ObjectByPkgPathAndName(pkgPath, typeName string) types.Object {
-	return f.pkgParser.ObjectByPkgPathAndName(pkgPath, typeName)
-}
-
-func (f *functions) AssignableToCtx(v types.Type) bool {
-	return f.pkgParser.AssignableToCtx(v)
-}
-
-func (f *functions) AssignableTo(v, t types.Type) bool {
-	return f.pkgParser.AssignableTo(v, t)
-}
-
 func (f *functions) Exported(object types.Object) bool {
 	return object.Exported()
 }
@@ -113,72 +102,22 @@ func (f *functions) ObjectType(object types.Object) types.Type {
 	return object.Type()
 }
 
-func (f *functions) TypeName(typ types.Type) string {
-	return f.pkgParser.TypeName(typ)
-}
-
-func (f *functions) UnderlyingType(typ types.Type) types.Type {
-	return f.pkgParser.UnderlyingType(typ)
-}
-
 func (f *functions) Structs() []types.Object {
-	return f.filterByPlace(PlaceStruct)
+	return f.pkgParser.Structs(f.pkgPath)
 }
 
 func (f *functions) Interfaces() []types.Object {
-	return f.filterByPlace(PlaceInterface)
+	return f.pkgParser.Interfaces(f.pkgPath)
 }
 
-func (f *functions) Methods(object types.Object) []types.Object {
-	return f.pkgParser.Methods(object)
-}
-
-func (f *functions) InterfaceMethods(object types.Object) []types.Object {
-	return f.pkgParser.InterfaceMethods(object)
-}
-
-func (f *functions) StructMethods(object types.Object) []types.Object {
-	return f.pkgParser.StructMethods(object)
-}
-
-func (f *functions) Params(methodOrFunc types.Object) []types.Object {
-	return f.pkgParser.Params(methodOrFunc)
-}
-
-func (f *functions) FirstParam(methodOrFunc types.Object) types.Object {
-	return f.pkgParser.FirstParam(methodOrFunc)
-}
-
-func (f *functions) Results(methodOrFunc types.Object) []types.Object {
-	return f.pkgParser.Results(methodOrFunc)
-}
-
-func (f *functions) FirstResult(methodOrFunc types.Object) types.Object {
-	return f.pkgParser.FirstResult(methodOrFunc)
-}
-
-func (f *functions) LastResult(methodOrFunc types.Object) types.Object {
-	return f.pkgParser.LastResult(methodOrFunc)
-}
-
-func (f *functions) HasErrorResult(methodOrFunc types.Object) bool {
-	return f.pkgParser.HasErrorResult(methodOrFunc)
-}
-
-func (f *functions) FilterByMeta(metaName string, objects []types.Object) []types.Object {
-	filteredObjects := make([]types.Object, 0, 8)
-	for _, object := range objects {
-		if f.HasMeta(metaName, object) {
-			filteredObjects = append(filteredObjects, object)
-		}
-	}
-	return filteredObjects
+func (f *functions) Functions() []types.Object {
+	return f.pkgParser.Functions(f.pkgPath)
 }
 
 func (f *functions) FilterByMetaExpr(metaName string, exprStr string, objects []types.Object) []types.Object {
 	filteredObjects := make([]types.Object, 0, 8)
 	for _, object := range objects {
-		if !f.HasMeta(metaName, object) {
+		if !f.metaParser.HasMeta(metaName, object) {
 			continue
 		}
 		metas := f.metaParser.ObjectMetaGroup(object, metaName)
@@ -197,31 +136,6 @@ func (f *functions) FilterByMetaExpr(metaName string, exprStr string, objects []
 	return filteredObjects
 }
 
-func (f *functions) HasMeta(metaName string, object types.Object) bool {
-	metas := f.metaParser.ObjectMetaGroups(object, metaName)
-	return len(metas) > 0
-}
-
-func (f *functions) FilterByMethodContainsMeta(metaName string, objects []types.Object) []types.Object {
-	filteredObjects := make([]types.Object, 0, 8)
-	for _, object := range objects {
-		if f.HasMethodContainsMeta(metaName, object) {
-			filteredObjects = append(filteredObjects, object)
-		}
-	}
-	return filteredObjects
-}
-
-func (f *functions) HasMethodContainsMeta(metaName string, object types.Object) bool {
-	methods := f.Methods(object)
-	for _, method := range methods {
-		if f.HasMeta(metaName, method) {
-			return true
-		}
-	}
-	return false
-}
-
 func (f *functions) FilterObjects(filterFuncName string, objects []types.Object) []types.Object {
 	filter := f.FuncMap()[filterFuncName].(func(types.Object) bool)
 	result := make([]types.Object, 2)
@@ -232,10 +146,6 @@ func (f *functions) FilterObjects(filterFuncName string, objects []types.Object)
 		result = append(result, object)
 	}
 	return result
-}
-
-func (f *functions) Indirect(typ types.Type) types.Type {
-	return f.pkgParser.Indirect(typ)
 }
 
 func (f *functions) Declare(object types.Object) string {
@@ -335,27 +245,6 @@ func (f *functions) Import(pkgPath string) string {
 	return f.importTracker.Import(pkgPath)
 }
 
-func (f *functions) ObjectMetaGroups(object types.Object, metaNames ...string) map[string]Group {
-	return f.metaParser.ObjectMetaGroups(object, metaNames...)
-}
-
-func (f *functions) ObjectMetaGroup(object types.Object, metaName string) Group {
-	return f.metaParser.ObjectMetaGroup(object, metaName)
-}
-
 func (f *functions) MultipleLines(line string) string {
 	return "\"" + strings.ReplaceAll(line, "\n", "\\n\"+\n\"") + "\""
-}
-
-func (f *functions) filterByPlace(place Place) []types.Object {
-	scope := f.pkg.Types.Scope()
-	var result []types.Object
-	for _, typeName := range scope.Names() {
-		object := scope.Lookup(typeName)
-		objectPlace := f.pkgParser.ObjectPlace(object)
-		if objectPlace&place > 0 {
-			result = append(result, object)
-		}
-	}
-	return result
 }

@@ -41,6 +41,8 @@ type PkgParser struct {
 	fileSet              *token.FileSet
 	filenameToAstFile    sync.Map //key=string,value=*ast.File
 	fileParsingLock      sync.Map //key=string,value=*sync.Mutex
+	anonymousAssign      map[types.Type]map[types.Type]bool
+	anonymousAssignTo    map[types.Type]map[types.Type]bool
 }
 
 func NewPkgParser() *PkgParser {
@@ -50,6 +52,8 @@ func NewPkgParser() *PkgParser {
 		pathToPkgPath:        map[string]string{},
 		pkgPathToPath:        map[string]string{},
 		fileSet:              token.NewFileSet(),
+		anonymousAssign:      make(map[types.Type]map[types.Type]bool, 64),
+		anonymousAssignTo:    make(map[types.Type]map[types.Type]bool, 64),
 	}
 }
 
@@ -72,8 +76,8 @@ func (pp *PkgParser) Load(paths ...string) (err error) {
 	}
 
 	cfg := &packages.Config{
-		Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles |
-			packages.NeedImports | packages.NeedTypes | packages.NeedSyntax,
+		Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles | packages.NeedImports |
+			packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo,
 		//BuildFlags: []string{"-tags", GeneratedBuildTag},
 		Fset:      pp.fileSet,
 		ParseFile: pp.parseFile,
@@ -85,7 +89,7 @@ func (pp *PkgParser) Load(paths ...string) (err error) {
 		return
 	}
 	for _, pkg := range packageList {
-		if len(pkg.GoFiles) == 0 {
+		if len(pkg.CompiledGoFiles) == 0 {
 			continue
 		}
 		pp.pkgPathToPkg[pkg.PkgPath] = pkg
@@ -97,6 +101,8 @@ func (pp *PkgParser) Load(paths ...string) (err error) {
 		for pkgPath, importedPkg := range pkg.Imports {
 			pp.importedPkgPathToPkg[pkgPath] = importedPkg
 		}
+
+		pp.parseAnonymousAssign(pkg)
 	}
 	return
 }
@@ -117,44 +123,16 @@ func (pp *PkgParser) PkgPath(path string) string {
 	return pp.pathToPkgPath[path]
 }
 
-func (pp *PkgParser) ObjectByPkgPathAndName(pkgPath, typeName string) types.Object {
-	err := pp.Load(pkgPath)
-	if err != nil {
-		panic(fmt.Errorf("can't load pakcage %s", pkgPath))
-	}
-	pkg := pp.Package(pkgPath)
-	if pkg == nil {
-		return nil
-	}
-	return pkg.Types.Scope().Lookup(typeName)
+func (pp *PkgParser) Structs(pkgPath string) []types.Object {
+	return pp.filterByPlace(pkgPath, PlaceStruct)
 }
 
-// AssignableToCtx reports whether a value of type V is assignable to context.Context.
-// The behavior of AssignableTo is undefined if V or T is an uninstantiated generic type.
-func (pp *PkgParser) AssignableToCtx(v types.Type) bool {
-	if v.String() == "context.Context" {
-		return true
-	}
-	ctxObject := pp.ObjectByPkgPathAndName("context", "Context")
-	return pp.AssignableTo(v, ctxObject.Type())
+func (pp *PkgParser) Interfaces(pkgPath string) []types.Object {
+	return pp.filterByPlace(pkgPath, PlaceInterface)
 }
 
-// AssignableTo reports whether a value of type V is assignable to a variable of type T.
-// The behavior of AssignableTo is undefined if V or T is an uninstantiated generic type.
-//TODO This has performance problems, and subsequent optimization needs to be done, using cache?
-func (pp *PkgParser) AssignableTo(v, t types.Type) bool {
-	if pp.TypeName(t) == TypeNameNamed {
-		t = t.Underlying()
-	}
-	namedV, ok := v.(*types.Named)
-	if !ok {
-		return v.String() == t.String() || types.AssignableTo(v, t)
-	}
-	namedVObj := namedV.Obj()
-	namedVObjPkgPath := namedVObj.Pkg().Path()
-	namedVObjName := namedVObj.Name()
-	vObject := pp.ObjectByPkgPathAndName(namedVObjPkgPath, namedVObjName)
-	return v.String() == t.String() || types.AssignableTo(vObject.Type(), t)
+func (pp *PkgParser) Functions(pkgPath string) []types.Object {
+	return pp.filterByPlace(pkgPath, PlaceFunc)
 }
 
 func (pp *PkgParser) Methods(object types.Object) []types.Object {
@@ -248,6 +226,65 @@ func (pp *PkgParser) HasErrorResult(methodOrFunc types.Object) bool {
 		return false
 	}
 	return lastResult.Type().String() == "error"
+}
+
+func (pp *PkgParser) ObjectByPkgPathAndName(pkgPath, typeName string) types.Object {
+	err := pp.Load(pkgPath)
+	if err != nil {
+		panic(fmt.Errorf("can't load pakcage %s", pkgPath))
+	}
+	pkg := pp.Package(pkgPath)
+	if pkg == nil {
+		return nil
+	}
+	return pkg.Types.Scope().Lookup(typeName)
+}
+
+// AssignableToCtx reports whether a value of type V is assignable to context.Context.
+// The behavior of AssignableTo is undefined if V or T is an uninstantiated generic type.
+func (pp *PkgParser) AssignableToCtx(v types.Type) bool {
+	if v.String() == "context.Context" {
+		return true
+	}
+	ctxObject := pp.ObjectByPkgPathAndName("context", "Context")
+	return pp.AssignableTo(v, ctxObject.Type())
+}
+
+// AssignableTo reports whether a value of type V is assignable to a variable of type T.
+// The behavior of AssignableTo is undefined if V or T is an uninstantiated generic type.
+func (pp *PkgParser) AssignableTo(v, t types.Type) bool {
+	if pp.TypeName(t) == TypeNameNamed {
+		t = t.Underlying()
+	}
+	namedV, ok := v.(*types.Named)
+	if !ok {
+		return v.String() == t.String() || types.AssignableTo(v, t)
+	}
+	namedVObj := namedV.Obj()
+	namedVObjPkgPath := namedVObj.Pkg().Path()
+	namedVObjName := namedVObj.Name()
+	vObject := pp.ObjectByPkgPathAndName(namedVObjPkgPath, namedVObjName)
+	return v.String() == t.String() || types.AssignableTo(vObject.Type(), t)
+}
+
+//AnonymousAssign return anonymous assign some value to t
+//var _ Foo = FooImpl{} Foo is the t,FooImpl is the result
+func (pp *PkgParser) AnonymousAssign(t types.Type) (values []types.Type) {
+	assigns := pp.anonymousAssign[t]
+	for k, _ := range assigns {
+		values = append(values, k)
+	}
+	return
+}
+
+//AnonymousAssignTo return anonymous assign some value to t
+//var _ Foo = FooImpl{} Foo is the result,FooImpl is the v
+func (pp *PkgParser) AnonymousAssignTo(v types.Type) (types []types.Type) {
+	assigns := pp.anonymousAssign[v]
+	for k, _ := range assigns {
+		types = append(types, k)
+	}
+	return
 }
 
 func (pp *PkgParser) Indirect(typ types.Type) types.Type {
@@ -413,6 +450,42 @@ func (pp *PkgParser) parseFile(fileSet *token.FileSet, filename string, src []by
 	return
 }
 
+func (pp *PkgParser) parseAnonymousAssign(pkg *packages.Package) {
+
+	for _, syntax := range pkg.Syntax {
+		ast.Inspect(syntax, func(node ast.Node) bool {
+			switch node := node.(type) {
+			case *ast.ValueSpec:
+				if len(node.Names) == 0 || node.Names[0].Name != "_" {
+					return false
+				}
+				typesInfo := pkg.TypesInfo
+				typ := typesInfo.TypeOf(node.Type)
+				value := typesInfo.TypeOf(node.Values[0])
+
+				assigns := pp.anonymousAssign[typ]
+				if assigns == nil {
+					assigns = make(map[types.Type]bool, 4)
+					pp.anonymousAssign[typ] = assigns
+				}
+				assigns[value] = true
+
+				assignTos := pp.anonymousAssignTo[value]
+				if assignTos == nil {
+					assignTos = make(map[types.Type]bool, 4)
+					pp.anonymousAssignTo[value] = assignTos
+				}
+				assignTos[typ] = true
+				return false
+			case *ast.File, *ast.GenDecl:
+				return true
+			default:
+				return false
+			}
+		})
+	}
+}
+
 func (pp *PkgParser) doPosToComments(astFile *ast.File) error {
 	commentMap := ast.NewCommentMap(pp.fileSet, astFile, astFile.Comments)
 	for astNode, commentGroups := range commentMap {
@@ -431,9 +504,7 @@ func (pp *PkgParser) doPosToComments(astFile *ast.File) error {
 			case *ast.ValueSpec:
 				nodeIdentPos = node.Names[0].Pos()
 			default:
-				//position := pp.fileSet.Position(node.Pos())
-				//fmt.Printf("file=%v,line=%v,column=%v", position.Filename, position.Line, position.Column)
-				//return fmt.Errorf("parse package: don't support parse comment for [%#v]", node)
+				continue
 			}
 		case *ast.File:
 			nodeIdentPos = node.Name.Pos()
@@ -441,14 +512,26 @@ func (pp *PkgParser) doPosToComments(astFile *ast.File) error {
 			*ast.IfStmt, *ast.ForStmt, *ast.Ident, *ast.ImportSpec, *ast.RangeStmt:
 			continue
 		default:
-			//position := pp.fileSet.Position(node.Pos())
-			//fmt.Printf("file=%v,line=%v,column=%v", position.Filename, position.Line, position.Column)
-			//return fmt.Errorf("parse package: don't support parse comment for [%#v]", node)
+			continue
 		}
 		commentLines := convertCommentGroupsToStrings(commentGroups)
 		pp.posToComments.Store(nodeIdentPos, commentLines)
 	}
 	return nil
+}
+
+func (pp *PkgParser) filterByPlace(pkgPath string, place Place) []types.Object {
+	pkg := pp.Package(pkgPath)
+	scope := pkg.Types.Scope()
+	var result []types.Object
+	for _, typeName := range scope.Names() {
+		object := scope.Lookup(typeName)
+		objectPlace := pp.ObjectPlace(object)
+		if objectPlace&place > 0 {
+			result = append(result, object)
+		}
+	}
+	return result
 }
 
 func convertCommentGroupsToStrings(commentGroups []*ast.CommentGroup) []string {

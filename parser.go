@@ -22,18 +22,39 @@ func NewParser(pkgParser *PkgParser) *Parser {
 	}
 }
 
-func (parser *Parser) FindByMetaName(pkgPath string, metaNames ...string) map[types.Object]map[string]Group {
-
-	pkg := parser.pkgParser.Package(pkgPath)
-	objectToMetas := map[types.Object]map[string]Group{}
-	scope := pkg.Types.Scope()
-	for _, typeName := range scope.Names() {
-		object := scope.Lookup(typeName)
-		var objectMetas map[string]Group
-		objectMetas = parser.ObjectMetaGroups(object, metaNames...)
-		objectToMetas[object] = objectMetas
+func (parser *Parser) FilterByMeta(metaName string, objects []types.Object) []types.Object {
+	filteredObjects := make([]types.Object, 0, 8)
+	for _, object := range objects {
+		if parser.HasMeta(metaName, object) {
+			filteredObjects = append(filteredObjects, object)
+		}
 	}
-	return objectToMetas
+	return filteredObjects
+}
+
+func (parser *Parser) HasMeta(metaName string, object types.Object) bool {
+	metas := parser.ObjectMetaGroups(object, metaName)
+	return len(metas) > 0
+}
+
+func (parser *Parser) FilterByMethodContainsMeta(metaName string, objects []types.Object) []types.Object {
+	filteredObjects := make([]types.Object, 0, 8)
+	for _, object := range objects {
+		if parser.HasMethodContainsMeta(metaName, object) {
+			filteredObjects = append(filteredObjects, object)
+		}
+	}
+	return filteredObjects
+}
+
+func (parser *Parser) HasMethodContainsMeta(metaName string, object types.Object) bool {
+	methods := parser.pkgParser.Methods(object)
+	for _, method := range methods {
+		if parser.HasMeta(metaName, method) {
+			return true
+		}
+	}
+	return false
 }
 
 func (parser *Parser) ObjectMetaGroups(object types.Object, metaNames ...string) (
