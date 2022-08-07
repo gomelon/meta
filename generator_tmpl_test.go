@@ -19,6 +19,17 @@ var tplText = `
 	}
 	{{end}}
 {{end}}
+
+{{range $struct := structs|filterByMeta "aop:interface"}}
+    {{$decorator := print $struct.Name "AOPInterface"}}
+    type {{$decorator}} interface {
+    {{range $method := $struct|methods}}
+        {{if $method|exported}}
+            {{$method|declare}}
+        {{end}}
+    {{end}}
+    }
+{{end}}
 `
 
 func TestTmplGenerate(t *testing.T) {
