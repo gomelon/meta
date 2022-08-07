@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/Masterminds/sprig/v3"
+	"go/types"
 	"golang.org/x/tools/imports"
 	"io"
 	"os"
@@ -32,6 +33,7 @@ type TmplPkgGen struct {
 	metaParser       *Parser
 	pkgFunctions     *functions
 	importTracker    ImportTracker
+	typeQualifier    types.Qualifier
 	funcMap          template.FuncMap
 	funcMapFactories []TPGFuncMapFactory
 	tpl              *template.Template
@@ -78,8 +80,11 @@ func NewTmplPkgGen(path string, templateText string, options ...TPGOption) (gen 
 	if gen.importTracker == nil {
 		gen.importTracker = NewDefaultImportTracker(gen.pkgPath)
 	}
+	gen.typeQualifier = func(p *types.Package) string {
+		return gen.importTracker.Import(p.Path())
+	}
 
-	functions := newFunctions(gen.pkgParser, gen.metaParser, gen.importTracker, gen.pkgPath)
+	functions := newFunctions(gen)
 	gen.pkgFunctions = functions
 
 	for _, factory := range gen.funcMapFactories {
@@ -111,6 +116,10 @@ func (gen *TmplPkgGen) PkgFunctions() *functions {
 
 func (gen *TmplPkgGen) ImportTracker() ImportTracker {
 	return gen.importTracker
+}
+
+func (gen *TmplPkgGen) PkgPath() string {
+	return gen.pkgPath
 }
 
 type TPGOption func(gen *TmplPkgGen)

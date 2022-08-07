@@ -41,8 +41,8 @@ type PkgParser struct {
 	fileSet              *token.FileSet
 	filenameToAstFile    sync.Map //key=string,value=*ast.File
 	fileParsingLock      sync.Map //key=string,value=*sync.Mutex
-	anonymousAssign      map[types.Type]map[types.Type]bool
-	anonymousAssignTo    map[types.Type]map[types.Type]bool
+	anonymousAssign      map[string]map[types.Type]bool
+	anonymousAssignTo    map[string]map[types.Type]bool
 }
 
 func NewPkgParser() *PkgParser {
@@ -52,8 +52,8 @@ func NewPkgParser() *PkgParser {
 		pathToPkgPath:        map[string]string{},
 		pkgPathToPath:        map[string]string{},
 		fileSet:              token.NewFileSet(),
-		anonymousAssign:      make(map[types.Type]map[types.Type]bool, 64),
-		anonymousAssignTo:    make(map[types.Type]map[types.Type]bool, 64),
+		anonymousAssign:      make(map[string]map[types.Type]bool, 64),
+		anonymousAssignTo:    make(map[string]map[types.Type]bool, 64),
 	}
 }
 
@@ -270,7 +270,7 @@ func (pp *PkgParser) AssignableTo(v, t types.Type) bool {
 //AnonymousAssign return anonymous assign some value to t
 //var _ Foo = FooImpl{} Foo is the t,FooImpl is the result
 func (pp *PkgParser) AnonymousAssign(t types.Type) (values []types.Type) {
-	assigns := pp.anonymousAssign[t]
+	assigns := pp.anonymousAssign[t.String()]
 	for k, _ := range assigns {
 		values = append(values, k)
 	}
@@ -280,7 +280,7 @@ func (pp *PkgParser) AnonymousAssign(t types.Type) (values []types.Type) {
 //AnonymousAssignTo return anonymous assign some value to t
 //var _ Foo = FooImpl{} Foo is the result,FooImpl is the v
 func (pp *PkgParser) AnonymousAssignTo(v types.Type) (types []types.Type) {
-	assigns := pp.anonymousAssign[v]
+	assigns := pp.anonymousAssignTo[v.String()]
 	for k, _ := range assigns {
 		types = append(types, k)
 	}
@@ -463,17 +463,19 @@ func (pp *PkgParser) parseAnonymousAssign(pkg *packages.Package) {
 				typ := typesInfo.TypeOf(node.Type)
 				value := typesInfo.TypeOf(node.Values[0])
 
-				assigns := pp.anonymousAssign[typ]
+				typeStr := typ.String()
+				assigns := pp.anonymousAssign[typeStr]
 				if assigns == nil {
 					assigns = make(map[types.Type]bool, 4)
-					pp.anonymousAssign[typ] = assigns
+					pp.anonymousAssign[typeStr] = assigns
 				}
 				assigns[value] = true
 
-				assignTos := pp.anonymousAssignTo[value]
+				valueStr := value.String()
+				assignTos := pp.anonymousAssignTo[valueStr]
 				if assignTos == nil {
 					assignTos = make(map[types.Type]bool, 4)
-					pp.anonymousAssignTo[value] = assignTos
+					pp.anonymousAssignTo[valueStr] = assignTos
 				}
 				assignTos[typ] = true
 				return false

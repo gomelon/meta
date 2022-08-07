@@ -17,18 +17,15 @@ type functions struct {
 	typeQualifier types.Qualifier
 }
 
-func newFunctions(pkgParser *PkgParser, metaParser *Parser,
-	importTracker ImportTracker, pkgPath string) *functions {
+func newFunctions(gen *TmplPkgGen) *functions {
 
 	return &functions{
-		importTracker: importTracker,
-		metaParser:    metaParser,
-		pkgParser:     pkgParser,
-		pkg:           pkgParser.Package(pkgPath),
-		pkgPath:       pkgPath,
-		typeQualifier: func(p *types.Package) string {
-			return importTracker.Import(p.Path())
-		},
+		importTracker: gen.importTracker,
+		metaParser:    gen.metaParser,
+		pkgParser:     gen.pkgParser,
+		pkg:           gen.pkgParser.Package(gen.pkgPath),
+		pkgPath:       gen.pkgPath,
+		typeQualifier: gen.typeQualifier,
 	}
 }
 
