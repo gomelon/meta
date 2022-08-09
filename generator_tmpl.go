@@ -262,6 +262,7 @@ func (gen *TmplPkgGen) outputFile() string {
 }
 
 func (gen *TmplPkgGen) writerHeader(writer *bytes.Buffer) {
+	writer.WriteString(GeneratedComment)
 	//gen.writeBuildTag(writer)
 	gen.writePackage(writer)
 	gen.writeImports(writer)

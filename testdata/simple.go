@@ -37,6 +37,7 @@ type SimpleInterface interface {
 	MethodWithParamAndNameResult(name string) (r int)
 }
 
+//SimpleFunc some=1
 func SimpleFunc() {
 
 }
