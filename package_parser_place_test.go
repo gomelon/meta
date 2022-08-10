@@ -248,12 +248,12 @@ func TestObjectTarget_InterfaceMethod(t *testing.T) {
 		pkgParser := NewPkgParser()
 		_ = pkgParser.Load(tt.args.pkgPath)
 		object := pkgParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
-		itf := object.Type().Underlying().(*types.Interface)
+		iface := object.Type().Underlying().(*types.Interface)
 		var methodObject *types.Func
 		var paramObject *types.Var
 		var resultObject *types.Var
-		for i := 0; i < itf.NumMethods(); i++ {
-			methodObject = itf.Method(i)
+		for i := 0; i < iface.NumMethods(); i++ {
+			methodObject = iface.Method(i)
 			if methodObject.Name() == tt.args.methodName {
 				signature := methodObject.Type().(*types.Signature)
 

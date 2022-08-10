@@ -147,11 +147,11 @@ func (pp *PkgParser) Methods(object types.Object) []types.Object {
 }
 
 func (pp *PkgParser) InterfaceMethods(object types.Object) []types.Object {
-	itf := object.Type().Underlying().(*types.Interface)
-	numMethods := itf.NumMethods()
+	iface := object.Type().Underlying().(*types.Interface)
+	numMethods := iface.NumMethods()
 	methods := make([]types.Object, 0, numMethods)
 	for i := 0; i < numMethods; i++ {
-		methods = append(methods, itf.Method(i))
+		methods = append(methods, iface.Method(i))
 	}
 	return methods
 }
