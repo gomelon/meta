@@ -20,8 +20,8 @@ var tplText = `
 	{{end}}
 {{end}}
 
-{{range $struct := structs|filterByMeta "aop:interface"}}
-    {{$decorator := print $struct.Name "AOPInterface"}}
+{{range $struct := structs|filterByMeta "aop:iface"}}
+    {{$decorator := print $struct.Name "AOPIface"}}
     type {{$decorator}} interface {
     {{range $method := $struct|methods}}
         {{if $method|exported}}
@@ -33,7 +33,7 @@ var tplText = `
 `
 
 func TestTmplGenerate(t *testing.T) {
-
+	//generate output file is in ./testdata/zz_testdata_gen.go
 	workdir, _ := os.Getwd()
 	path := workdir + "/testdata"
 	generator, err := NewTmplPkgGen(path, tplText)
@@ -50,11 +50,10 @@ func TestTmplGenerate(t *testing.T) {
 }
 
 func TestScanToTmplGenerate(t *testing.T) {
-
-	workdir, _ := os.Getwd()
-
-	err := ScanFor(workdir).
-		TemplateText(tplText).RegexOr("testdata").
+	//generate output file is in ./testdata/zz_testdata_gen.go
+	err := ScanCurrentMod().
+		TemplateText(tplText).
+		RegexOr("testdata").
 		And().
 		Generate()
 
