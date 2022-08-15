@@ -36,7 +36,7 @@ func TestParser_ObjectMetaGroups(t *testing.T) {
 			if err != nil {
 				t.Errorf("ObjectMetaGroups() load pkg fail")
 			}
-			object := pkgParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+			object := pkgParser.Object(tt.args.pkgPath, tt.args.objectName)
 			fmt.Println(object.Name(), object.Pos())
 
 			objects := pkgParser.Functions(tt.args.pkgPath)

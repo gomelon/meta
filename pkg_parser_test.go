@@ -35,9 +35,9 @@ func TestLoad(t *testing.T) {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			got := pkgParser.ObjectByPkgPathAndName(tt.args.findPackagePath, tt.args.findTypeName)
+			got := pkgParser.Object(tt.args.findPackagePath, tt.args.findTypeName)
 			if (got != nil) != tt.wantFound {
-				t.Errorf("Load() then ObjectByPkgPathAndName(%v,%v), want %v",
+				t.Errorf("Load() then Object(%v,%v), want %v",
 					tt.args.findPackagePath, tt.args.findTypeName, tt.wantFound)
 			}
 		})
@@ -69,9 +69,9 @@ func TestPackagesHelper_FindType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pkgParser := NewPkgParser()
 			_ = pkgParser.Load(tt.args.loadPackagePaths...)
-			got := pkgParser.ObjectByPkgPathAndName(tt.args.findPackagePath, tt.args.findTypeName)
+			got := pkgParser.Object(tt.args.findPackagePath, tt.args.findTypeName)
 			if (got != nil) != tt.wantFound {
-				t.Errorf("ObjectByPkgPathAndName(%v,%v) wantFound %v",
+				t.Errorf("Object(%v,%v) wantFound %v",
 					tt.args.findPackagePath, tt.args.findTypeName, tt.wantFound)
 			}
 		})
@@ -142,8 +142,8 @@ func TestPkgParser_AssignableTo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pkgParser := NewPkgParser()
-			vType := pkgParser.ObjectByPkgPathAndName(tt.args.vPkgPath, tt.args.vName).Type()
-			tType := pkgParser.ObjectByPkgPathAndName(tt.args.tPkgPath, tt.args.tName).Type()
+			vType := pkgParser.Object(tt.args.vPkgPath, tt.args.vName).Type()
+			tType := pkgParser.Object(tt.args.tPkgPath, tt.args.tName).Type()
 			if got := pkgParser.AssignableTo(vType, tType); got != tt.want {
 				t.Errorf("AssignableTo() = %v, want %v", got, tt.want)
 			}

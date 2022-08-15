@@ -42,6 +42,8 @@ type TmplPkgGen struct {
 	outputFileSuffix   string
 	outputFilename     string
 	outputFullFilename string
+
+	err error
 }
 
 type TPGFuncMapFactory func(generator *TmplPkgGen) template.FuncMap
@@ -219,12 +221,14 @@ func (gen *TmplPkgGen) generate(writerFunc func() (io.Writer, error)) (err error
 
 	bodyBuf := bytes.NewBuffer(make([]byte, 0, 1024))
 	err = gen.tpl.Execute(bodyBuf, map[string]any{})
-	if err != nil || len(strings.TrimSpace(bodyBuf.String())) == 0 {
+	if len(strings.TrimSpace(bodyBuf.String())) == 0 {
+		gen.err = err
 		return
 	}
 
 	writer, err := writerFunc()
 	if err != nil {
+		gen.err = err
 		return
 	}
 
@@ -232,19 +236,19 @@ func (gen *TmplPkgGen) generate(writerFunc func() (io.Writer, error)) (err error
 	gen.writerHeader(headerBuf)
 
 	fileBuf := bytes.NewBuffer(make([]byte, 0, headerBuf.Len()+bodyBuf.Len()))
-	_, _ = fileBuf.ReadFrom(headerBuf)
-	_, _ = fileBuf.ReadFrom(bodyBuf)
+	_, gen.err = fileBuf.ReadFrom(headerBuf)
+	_, gen.err = fileBuf.ReadFrom(bodyBuf)
 
 	fileBytes := fileBuf.Bytes()
 	//format code and optimize import
 	fmtFileBytes, err := imports.Process(gen.outputFile(), fileBytes, nil)
 
 	if err != nil {
-		_, _ = writer.Write(fileBytes)
+		_, gen.err = writer.Write(fileBytes)
 		return
 	}
-	_, err = writer.Write(fmtFileBytes)
-	return
+	_, gen.err = writer.Write(fmtFileBytes)
+	return gen.err
 }
 
 func (gen *TmplPkgGen) outputFile() string {
@@ -262,39 +266,48 @@ func (gen *TmplPkgGen) outputFile() string {
 }
 
 func (gen *TmplPkgGen) writerHeader(writer *bytes.Buffer) {
-	writer.WriteString(GeneratedComment)
+	_, gen.err = writer.WriteString(GeneratedComment)
 	//gen.writeBuildTag(writer)
 	gen.writePackage(writer)
 	gen.writeImports(writer)
 }
 
 func (gen *TmplPkgGen) writeBuildTag(writer *bytes.Buffer) {
-	_, _ = writer.WriteString(GeneratedBuildTag)
-	_, _ = writer.WriteString("\n\n")
+	if gen.err != nil {
+		return
+	}
+	_, gen.err = writer.WriteString(GeneratedBuildTag)
+	_, gen.err = writer.WriteString("\n\n")
 
 	buildTag := fmt.Sprintf("//+build !%s\n\n", GeneratedBuildTag)
-	_, _ = writer.WriteString(buildTag)
-	_, _ = writer.WriteString("\n\n")
+	_, gen.err = writer.WriteString(buildTag)
+	_, gen.err = writer.WriteString("\n\n")
 }
 
 func (gen *TmplPkgGen) writePackage(writer *bytes.Buffer) {
+	if gen.err != nil {
+		return
+	}
 	pkg := gen.pkgParser.Package(gen.pkgPath)
-	_, _ = writer.WriteString("package ")
-	_, _ = writer.WriteString(pkg.Name)
-	_, _ = writer.WriteRune('\n')
+	_, gen.err = writer.WriteString("package ")
+	_, gen.err = writer.WriteString(pkg.Name)
+	_, gen.err = writer.WriteRune('\n')
 }
 
 func (gen *TmplPkgGen) writeImports(writer *bytes.Buffer) {
+	if gen.err != nil {
+		return
+	}
 	lines := gen.importTracker.ImportLines()
 
 	if len(lines) == 0 {
 		return
 	}
 
-	_, _ = writer.WriteString("import (\n")
+	_, gen.err = writer.WriteString("import (\n")
 	for _, line := range lines {
-		_, _ = writer.WriteString(line)
-		_, _ = writer.WriteRune('\n')
+		_, gen.err = writer.WriteString(line)
+		_, gen.err = writer.WriteRune('\n')
 	}
-	_, _ = writer.WriteString(")\n")
+	_, gen.err = writer.WriteString(")\n")
 }

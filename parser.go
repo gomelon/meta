@@ -37,17 +37,17 @@ func (parser *Parser) HasMeta(metaName string, object types.Object) bool {
 	return len(metas) > 0
 }
 
-func (parser *Parser) FilterByMethodContainsMeta(metaName string, objects []types.Object) []types.Object {
+func (parser *Parser) FilterByMethodHasMeta(metaName string, objects []types.Object) []types.Object {
 	filteredObjects := make([]types.Object, 0, 8)
 	for _, object := range objects {
-		if parser.HasMethodContainsMeta(metaName, object) {
+		if parser.HasMethodHasMeta(metaName, object) {
 			filteredObjects = append(filteredObjects, object)
 		}
 	}
 	return filteredObjects
 }
 
-func (parser *Parser) HasMethodContainsMeta(metaName string, object types.Object) bool {
+func (parser *Parser) HasMethodHasMeta(metaName string, object types.Object) bool {
 	methods := parser.pkgParser.Methods(object)
 	for _, method := range methods {
 		if parser.HasMeta(metaName, method) {
@@ -94,6 +94,15 @@ func (parser *Parser) ObjectMetaGroup(object types.Object, metaName string) (par
 	}
 	metaNameToParsedMetaGroup[metaName] = parsedMetaGroup
 	return
+}
+
+func (parser *Parser) ObjectMeta(object types.Object, metaName string) (m *Meta) {
+	group := parser.ObjectMetaGroup(object, metaName)
+	if group != nil && len(group) > 0 {
+		return group[0]
+	} else {
+		return nil
+	}
 }
 
 func (parser *Parser) filterComments(pos token.Pos, metaName string) []string {

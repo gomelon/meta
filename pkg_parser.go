@@ -228,7 +228,7 @@ func (pp *PkgParser) HasErrorResult(methodOrFunc types.Object) bool {
 	return lastResult.Type().String() == "error"
 }
 
-func (pp *PkgParser) ObjectByPkgPathAndName(pkgPath, typeName string) types.Object {
+func (pp *PkgParser) Object(pkgPath, typeName string) types.Object {
 	err := pp.Load(pkgPath)
 	if err != nil {
 		panic(fmt.Errorf("can't load pakcage %s", pkgPath))
@@ -246,7 +246,7 @@ func (pp *PkgParser) AssignableToCtx(v types.Type) bool {
 	if v.String() == "context.Context" {
 		return true
 	}
-	ctxObject := pp.ObjectByPkgPathAndName("context", "Context")
+	ctxObject := pp.Object("context", "Context")
 	return pp.AssignableTo(v, ctxObject.Type())
 }
 
@@ -263,7 +263,7 @@ func (pp *PkgParser) AssignableTo(v, t types.Type) bool {
 	namedVObj := namedV.Obj()
 	namedVObjPkgPath := namedVObj.Pkg().Path()
 	namedVObjName := namedVObj.Name()
-	vObject := pp.ObjectByPkgPathAndName(namedVObjPkgPath, namedVObjName)
+	vObject := pp.Object(namedVObjPkgPath, namedVObjName)
 	return v.String() == t.String() || types.AssignableTo(vObject.Type(), t)
 }
 

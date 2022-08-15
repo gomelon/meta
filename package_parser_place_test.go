@@ -59,7 +59,7 @@ func TestObjectTarget(t *testing.T) {
 	for _, tt := range tests {
 		pkgParser := NewPkgParser()
 		_ = pkgParser.Load(tt.args.pkgPath)
-		object := pkgParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		object := pkgParser.Object(tt.args.pkgPath, tt.args.objectName)
 		t.Run(tt.name, func(t *testing.T) {
 			if got := pkgParser.ObjectPlace(object); got != tt.want {
 				t.Errorf("ObjectPlace() = %v, want %v", got, tt.want)
@@ -90,7 +90,7 @@ func TestObjectTarget_StructField(t *testing.T) {
 	for _, tt := range tests {
 		pkgParser := NewPkgParser()
 		_ = pkgParser.Load(tt.args.pkgPath)
-		object := pkgParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		object := pkgParser.Object(tt.args.pkgPath, tt.args.objectName)
 		structObject := object.Type().Underlying().(*types.Struct)
 		fieldObject := structObject.Field(0)
 		t.Run(tt.name, func(t *testing.T) {
@@ -160,7 +160,7 @@ func TestObjectTarget_StructMethod(t *testing.T) {
 	for _, tt := range tests {
 		pkgParser := NewPkgParser()
 		_ = pkgParser.Load(tt.args.pkgPath)
-		object := pkgParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		object := pkgParser.Object(tt.args.pkgPath, tt.args.objectName)
 		namedObject := object.Type().(*types.Named)
 		var methodObject *types.Func
 		var paramObject *types.Var
@@ -247,7 +247,7 @@ func TestObjectTarget_InterfaceMethod(t *testing.T) {
 	for _, tt := range tests {
 		pkgParser := NewPkgParser()
 		_ = pkgParser.Load(tt.args.pkgPath)
-		object := pkgParser.ObjectByPkgPathAndName(tt.args.pkgPath, tt.args.objectName)
+		object := pkgParser.Object(tt.args.pkgPath, tt.args.objectName)
 		iface := object.Type().Underlying().(*types.Interface)
 		var methodObject *types.Func
 		var paramObject *types.Var

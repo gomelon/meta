@@ -31,44 +31,47 @@ func newFunctions(gen *TmplPkgGen) *functions {
 
 func (f *functions) FuncMap() map[string]any {
 	return map[string]any{
-		"name":                       f.Name,
-		"package":                    f.Package,
-		"objectByPkgPathAndName":     f.pkgParser.ObjectByPkgPathAndName,
-		"assignableToCtx":            f.pkgParser.AssignableToCtx,
-		"assignableTo":               f.pkgParser.AssignableTo,
-		"anonymousAssign":            f.pkgParser.AnonymousAssign,
-		"anonymousAssignTo":          f.pkgParser.AnonymousAssignTo,
-		"exported":                   f.Exported,
-		"objectPlace":                f.ObjectPlace,
-		"objectType":                 f.ObjectType,
-		"typeName":                   f.pkgParser.TypeName,
-		"underlyingType":             f.pkgParser.UnderlyingType,
-		"structs":                    f.Structs,
-		"interfaces":                 f.Interfaces,
-		"functions":                  f.Functions,
-		"methods":                    f.pkgParser.Methods,
-		"params":                     f.pkgParser.Params,
-		"firstParam":                 f.pkgParser.FirstParam,
-		"results":                    f.pkgParser.Results,
-		"firstResult":                f.pkgParser.FirstResult,
-		"lastResult":                 f.pkgParser.LastResult,
-		"hasErrorResult":             f.pkgParser.HasErrorResult,
-		"filterByMeta":               f.metaParser.FilterByMeta,
-		"filterByMetaExpr":           f.FilterByMetaExpr,
-		"hasMeta":                    f.metaParser.HasMeta,
-		"filterByMethodContainsMeta": f.metaParser.FilterByMethodContainsMeta,
-		"hasMethodContainsMeta":      f.metaParser.HasMethodContainsMeta,
-		"filterObjects":              f.FilterObjects,
-		"indirect":                   f.pkgParser.Indirect,
-		"declare":                    f.Declare,
-		"declareType":                f.DeclareType,
-		"typeString":                 f.TypeString,
-		"initType":                   f.InitType,
-		"methodSignature":            f.MethodSignature,
-		"import":                     f.Import,
-		"objectMetaGroups":           f.metaParser.ObjectMetaGroups,
-		"objectMetaGroup":            f.metaParser.ObjectMetaGroup,
-		"multipleLines":              f.MultipleLines,
+		"name":                  f.Name,
+		"fullName":              f.FullName,
+		"package":               f.Package,
+		"object":                f.pkgParser.Object,
+		"assignableToCtx":       f.pkgParser.AssignableToCtx,
+		"assignableTo":          f.pkgParser.AssignableTo,
+		"anonymousAssign":       f.pkgParser.AnonymousAssign,
+		"anonymousAssignTo":     f.pkgParser.AnonymousAssignTo,
+		"exported":              f.Exported,
+		"objectPlace":           f.ObjectPlace,
+		"objectType":            f.ObjectType,
+		"typeName":              f.pkgParser.TypeName,
+		"underlyingType":        f.pkgParser.UnderlyingType,
+		"structs":               f.Structs,
+		"interfaces":            f.Interfaces,
+		"functions":             f.Functions,
+		"methods":               f.pkgParser.Methods,
+		"params":                f.pkgParser.Params,
+		"firstParam":            f.pkgParser.FirstParam,
+		"results":               f.pkgParser.Results,
+		"firstResult":           f.pkgParser.FirstResult,
+		"lastResult":            f.pkgParser.LastResult,
+		"hasErrorResult":        f.pkgParser.HasErrorResult,
+		"filterByMeta":          f.metaParser.FilterByMeta,
+		"filterByMetaExpr":      f.FilterByMetaExpr,
+		"hasMeta":               f.metaParser.HasMeta,
+		"filterByMethodHasMeta": f.metaParser.FilterByMethodHasMeta,
+		"hasMethodHasMeta":      f.metaParser.HasMethodHasMeta,
+		"metaProp":              f.metaParser.HasMethodHasMeta,
+		"filterObjects":         f.FilterObjects,
+		"indirect":              f.pkgParser.Indirect,
+		"declare":               f.Declare,
+		"declareType":           f.DeclareType,
+		"typeString":            f.TypeString,
+		"initType":              f.InitType,
+		"methodSignature":       f.MethodSignature,
+		"import":                f.Import,
+		"objectMetaGroups":      f.metaParser.ObjectMetaGroups,
+		"objectMetaGroup":       f.metaParser.ObjectMetaGroup,
+		"objectMeta":            f.metaParser.ObjectMeta,
+		"multipleLines":         f.MultipleLines,
 	}
 }
 
@@ -79,6 +82,17 @@ func (f *functions) Name(in any) string {
 		name = in.Name
 	case types.Object:
 		name = in.Name()
+	}
+	return name
+}
+
+func (f *functions) FullName(in any) string {
+	var name string
+	switch in := in.(type) {
+	case *packages.Package:
+		name = in.Name
+	case types.Object:
+		name = in.Pkg().Path() + "." + in.Name()
 	}
 	return name
 }

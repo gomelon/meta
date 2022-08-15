@@ -53,6 +53,11 @@ func (s *SomeStruct) PublicMethod(ctx context.Context, id int64) (string, error)
 func (s *SomeStruct) privateMethod(ctx context.Context, time time.Time) (int32, error) {
 	return 0, nil
 }
+
+//NoneMethodStruct
+//aop:iface
+type NoneMethodStruct struct {
+}
 ```
 * 代码生成程序,[generator_tmpl_test.go](https://github.com/gomelon/meta/blob/main/generator_tmpl_test.go)
 ```golang
@@ -204,3 +209,5 @@ func (_impl *UserDaoSQLImpl) FindByBirthdayGTE2(ctx context.Context, time time.T
 }
 
 ```
+
+# 主要函数
