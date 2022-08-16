@@ -35,6 +35,7 @@ func (f *functions) FuncMap() map[string]any {
 		"fullName":              f.FullName,
 		"package":               f.Package,
 		"object":                f.pkgParser.Object,
+		"objectComments":        f.pkgParser.ObjectComments,
 		"assignableToCtx":       f.pkgParser.AssignableToCtx,
 		"assignableTo":          f.pkgParser.AssignableTo,
 		"anonymousAssign":       f.pkgParser.AnonymousAssign,

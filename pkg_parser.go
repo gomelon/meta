@@ -240,6 +240,11 @@ func (pp *PkgParser) Object(pkgPath, typeName string) types.Object {
 	return pkg.Types.Scope().Lookup(typeName)
 }
 
+func (pp *PkgParser) ObjectComments(object types.Object) []string {
+	pos := object.Pos()
+	return pp.Comments(pos)
+}
+
 // AssignableToCtx reports whether a value of type V is assignable to context.Context.
 // The behavior of AssignableTo is undefined if V or T is an uninstantiated generic type.
 func (pp *PkgParser) AssignableToCtx(v types.Type) bool {
