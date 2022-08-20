@@ -6,7 +6,7 @@ import (
 )
 
 //SomeStruct
-//aop:iface
+//+iface.Iface
 type SomeStruct struct {
 }
 
@@ -19,6 +19,6 @@ func (s *SomeStruct) privateMethod(ctx context.Context, time time.Time) (int32, 
 }
 
 //NoneMethodStruct
-//aop:iface
+//+iface.Iface
 type NoneMethodStruct struct {
 }

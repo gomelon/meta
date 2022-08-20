@@ -10,12 +10,12 @@
 * 可以面向切面编程(Aspect-Oriented Programming)
 
 应用场景包括但不限于
-* 通过方法签名生成数据库访问实现(类`Spring Data`), 参看[metas/msql](https://github.com/gomelon/metas/tree/main/msql)
+* 通过方法签名生成数据库访问实现(类`Spring Data`), 参看[sqlmap](https://github.com/gomelon/metas/tree/main/msql)
 * 缓存切面
 * 事务切面
 * 熔断及降级切面
 * 链路跟踪切面
-* 自动注入,参看[metas/mwire](https://github.com/gomelon/metas/tree/main/mwire)
+* 自动注入,参看[autowire](https://github.com/gomelon/metas/tree/main/mwire)
 
 # 原理
 很多编程语言都支持元编程，例如Java,主要通过反射加注解。
@@ -38,11 +38,11 @@ Golang通过Tag加反射也能进行元编程，但有以下缺点
 
 # 使用
 ## 简单示例
-本例子演示为注释有`//aop:iface`的`struct`生成接口
+本例子演示为注释有`//+iface.Iface`的`struct`生成接口
 * 待成生接口的`struct`,[struct.go](https://github.com/gomelon/meta/blob/main/testdata/struct.go)
 ```golang
 //SomeStruct
-//aop:iface
+//+iface.Iface
 type SomeStruct struct {
 }
 
@@ -55,7 +55,7 @@ func (s *SomeStruct) privateMethod(ctx context.Context, time time.Time) (int32, 
 }
 
 //NoneMethodStruct
-//aop:iface
+//+iface.Iface
 type NoneMethodStruct struct {
 }
 ```
@@ -63,7 +63,7 @@ type NoneMethodStruct struct {
 ```golang
 // define template
 var tplText = `
-{{range $struct := structs|filterByMeta "aop:iface"}}
+{{range $struct := structs|filterByMeta "+iface.Iface"}}
     {{$decorator := print $struct.Name "AOPIface"}}
     type {{$decorator}} interface {
     {{range $method := $struct|methods}}
@@ -112,20 +112,20 @@ type SomeStructAOPIface interface {
 ```
 
 ## 复杂示例
-本例子演示为注释`//sql:table`的`interface`生成数据库访问实现(类`Spring Data`)
+本例子演示为注释`//+sqlmap.Mapper`的`interface`生成数据库访问实现(类`Spring Data`)
 * 待生成实现的`interface`,[user.go](https://github.com/gomelon/metas/blob/main/msql/testdata/user.go)
   * 为方法`FindByBirthdayGTE`按方法签名生成数据库访问实现
-  * 为方法`FindByBirthdayGTE2`按方法上的`sql:select`的`query`参数对应的sql生成数据库访问实现
+  * 为方法`FindByBirthdayGTE2`按方法上的`+sqlmap.Select`的`query`参数对应的sql生成数据库访问实现
 ```go
 //UserDao
-//sql:table name=`user` dialect="mysql"
+//+sqlmap.Mapper Table=`user` Dialect="mysql"
 type UserDao interface {
 
 	// FindByBirthdayGTE
 	FindByBirthdayGTE(ctx context.Context /*sql:param ctx*/, time time.Time) ([]*User, error)
 
 	//FindByBirthdayGTE2
-	/*sql:select query="select * from `user` where birthday >= :time"*/
+	/*+sqlmap.Select Query="select * from `user` where birthday >= :time"*/
 	FindByBirthdayGTE2(ctx context.Context /*sql:param ctx*/, time time.Time) ([]*User, error)
 }
 ```

@@ -7,7 +7,7 @@ import (
 )
 
 var tplText = `
-{{range $itf := interfaces|filterByMeta "sql:table"}}
+{{range $itf := interfaces|filterByMeta "+sqlmap.Mapper"}}
 
 	{{ $decorator := print $itf.Name "Impl" }}
 	type {{$decorator}} struct{
@@ -20,7 +20,7 @@ var tplText = `
 	{{end}}
 {{end}}
 
-{{range $struct := structs|filterByMeta "aop:iface"}}
+{{range $struct := structs|filterByMeta "+iface.Iface"}}
     {{$decorator := print $struct.Name "AOPIface"}}
     type {{$decorator}} interface {
     {{range $method := $struct|methods}}
