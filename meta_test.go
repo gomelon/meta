@@ -11,10 +11,11 @@ func TestMeta_MapStruct(t *testing.T) {
 		properties map[string]string
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		input  any
-		wanted any
+		name    string
+		fields  fields
+		input   any
+		wantErr bool
+		wanted  any
 	}{
 		{
 			name: "should map struct",
@@ -33,7 +34,8 @@ func TestMeta_MapStruct(t *testing.T) {
 					"Float64Field": "1",
 				},
 			},
-			input: &MetaStruct{},
+			input:   &MetaStruct{},
+			wantErr: false,
 			wanted: &MetaStruct{
 				StrField:     "string",
 				IntField:     1,
@@ -54,8 +56,11 @@ func TestMeta_MapStruct(t *testing.T) {
 				name:       tt.fields.name,
 				properties: tt.fields.properties,
 			}
-			m.MapStruct(tt.input)
-
+			err := m.MapStruct(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MapStruct() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
 			if !reflect.DeepEqual(tt.input, tt.wanted) {
 				t.Errorf("MapStruct() = %v, want %v", tt.input, tt.wanted)
 			}
