@@ -75,6 +75,10 @@ func (pp *PkgParser) Load(paths ...string) (err error) {
 		unloadedPaths = append(unloadedPaths, inputPath)
 	}
 
+	if len(unloadedPaths) == 0 {
+		return nil
+	}
+
 	cfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles | packages.NeedImports |
 			packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo,
