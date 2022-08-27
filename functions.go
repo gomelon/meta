@@ -83,6 +83,8 @@ func (f *functions) Name(in any) string {
 		name = in.Name
 	case types.Object:
 		name = in.Name()
+	case *types.Named:
+		name = in.Obj().Name()
 	}
 	return name
 }
