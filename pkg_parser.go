@@ -469,6 +469,9 @@ func (pp *PkgParser) parseAnonymousAssign(pkg *packages.Package) {
 					return false
 				}
 				typesInfo := pkg.TypesInfo
+				if node.Type == nil {
+					return false
+				}
 				typ := typesInfo.TypeOf(node.Type)
 				value := typesInfo.TypeOf(node.Values[0])
 
