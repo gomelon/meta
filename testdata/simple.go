@@ -37,7 +37,8 @@ type SimpleInterface interface {
 	MethodWithParamAndNameResult(name string) (r int)
 }
 
-//SimpleFunc some=1
+//SimpleFunc
+//+testdata.SomeMeta some=1
 func SimpleFunc() {
 
 }

@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-func TestMeta_MapStruct(t *testing.T) {
+func TestMeta_MapTo(t *testing.T) {
 	type fields struct {
 		name       string
-		properties map[string]string
+		properties map[string]any
 	}
 	tests := []struct {
 		name    string
@@ -21,17 +21,17 @@ func TestMeta_MapStruct(t *testing.T) {
 			name: "should map struct",
 			fields: fields{
 				name: "Test",
-				properties: map[string]string{
+				properties: map[string]any{
 					"StrField":     "string",
-					"IntField":     "1",
-					"Int64Field":   "1",
-					"Uint64Field":  "1",
-					"Int32Field":   "1",
-					"Uint32Field":  "1",
-					"BoolField1":   "true",
-					"BoolField2":   "BoolField2",
-					"Float32Field": "1",
-					"Float64Field": "1",
+					"IntField":     int64(1),
+					"Int64Field":   int64(1),
+					"Uint64Field":  int64(1),
+					"Int32Field":   int64(1),
+					"Uint32Field":  int64(1),
+					"BoolField1":   true,
+					"BoolField2":   false,
+					"Float32Field": float64(1),
+					"Float64Field": float64(1),
 				},
 			},
 			input:   &MetaStruct{},
@@ -44,7 +44,7 @@ func TestMeta_MapStruct(t *testing.T) {
 				Int32Field:   1,
 				Uint32Field:  1,
 				BoolField1:   true,
-				BoolField2:   true,
+				BoolField2:   false,
 				Float32Field: 1,
 				Float64Field: 1,
 			},
@@ -53,10 +53,10 @@ func TestMeta_MapStruct(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Meta{
-				name:       tt.fields.name,
-				properties: tt.fields.properties,
+				qualifyName: tt.fields.name,
+				properties:  tt.fields.properties,
 			}
-			err := m.MapStruct(tt.input)
+			err := m.MapTo(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MapStruct() error = %v, wantErr %v", err, tt.wantErr)
 				return

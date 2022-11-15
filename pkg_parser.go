@@ -235,7 +235,7 @@ func (pp *PkgParser) HasErrorResult(methodOrFunc types.Object) bool {
 func (pp *PkgParser) Object(pkgPath, typeName string) types.Object {
 	err := pp.Load(pkgPath)
 	if err != nil {
-		panic(fmt.Errorf("can't load pakcage %s", pkgPath))
+		panic(fmt.Errorf("can't load pakcage %s: %w", pkgPath, err))
 	}
 	pkg := pp.Package(pkgPath)
 	if pkg == nil {

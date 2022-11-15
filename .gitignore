@@ -17,3 +17,5 @@
 *.idea
 .idea/
 go.sum
+*.interp
+*.tokens

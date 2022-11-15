@@ -2,30 +2,30 @@ package meta
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
-	"strconv"
 )
 
 //Group a group is consists of multiple Meta with the same name
 type Group []*Meta
 
 type Meta struct {
-	name       string
-	properties map[string]string
+	qualifyName string
+	properties  map[string]any
 }
 
-func New(name string) *Meta {
+func New(qualifyName string) *Meta {
 	return &Meta{
-		name:       name,
-		properties: map[string]string{},
+		qualifyName: qualifyName,
+		properties:  map[string]any{},
 	}
 }
 
-func (m *Meta) Name() string {
-	return m.name
+func (m *Meta) QualifyName() string {
+	return m.qualifyName
 }
 
-func (m *Meta) Property(key string) string {
+func (m *Meta) Property(key string) any {
 	return m.properties[key]
 }
 
@@ -34,18 +34,18 @@ func (m *Meta) SetProperty(key, value string) *Meta {
 	return m
 }
 
-func (m *Meta) Properties() map[string]string {
+func (m *Meta) Properties() map[string]any {
 	return m.properties
 }
 
-func (m *Meta) SetProperties(properties map[string]string) *Meta {
+func (m *Meta) SetProperties(properties map[string]any) *Meta {
 	for k, v := range properties {
 		m.properties[k] = v
 	}
 	return m
 }
 
-func (m *Meta) MapStruct(obj any) error {
+func (m *Meta) MapTo(obj any) error {
 	objPointerType := reflect.TypeOf(obj)
 	if objPointerType.Kind() != reflect.Pointer {
 		return errors.New("MapStruct param must be a Pointer")
@@ -55,13 +55,13 @@ func (m *Meta) MapStruct(obj any) error {
 	objValue := reflect.Indirect(objPointerValue)
 	for i := 0; i < objValue.NumField(); i++ {
 		field := objType.Field(i)
-		strVal := m.Property(field.Name)
-		if strVal == "" {
+		val, ok := m.properties[field.Name]
+		if !ok {
 			continue
 		}
 		fieldValue := objValue.Field(i)
 
-		err := setValueFromString(field, fieldValue, strVal)
+		err := setValue(fieldValue, val)
 		if err != nil {
 			return err
 		}
@@ -69,50 +69,47 @@ func (m *Meta) MapStruct(obj any) error {
 	return nil
 }
 
-func setValueFromString(field reflect.StructField, v reflect.Value, strVal string) error {
-	switch field.Type.Kind() {
+func setValue(v reflect.Value, val any) error {
+	switch v.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		val, err := strconv.ParseInt(strVal, 0, 64)
-		if err != nil {
-			return err
+		intVal, ok := val.(int64)
+		if !ok {
+			return fmt.Errorf("expect int value, but not: value=%v", val)
 		}
-		if v.OverflowInt(val) {
-			return errors.New("Int value too big: " + strVal)
+		if v.OverflowInt(intVal) {
+			return fmt.Errorf("int value too big: %d", intVal)
 		}
-		v.SetInt(val)
+		v.SetInt(intVal)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		val, err := strconv.ParseUint(strVal, 0, 64)
-		if err != nil {
-			return err
+		intVal, ok := val.(int64)
+		if !ok {
+			return fmt.Errorf("expect int value, but not: value=%v", val)
 		}
-		if v.OverflowUint(val) {
-			return errors.New("UInt value too big: " + strVal)
+		if v.OverflowUint(uint64(intVal)) {
+			return fmt.Errorf("int value too big: %d", intVal)
 		}
-		v.SetUint(val)
-	case reflect.Float32:
-		val, err := strconv.ParseFloat(strVal, 32)
-		if err != nil {
-			return err
+		v.SetUint(uint64(intVal))
+	case reflect.Float32, reflect.Float64:
+		floatVal, ok := val.(float64)
+		if !ok {
+			return fmt.Errorf("expect float value, but not: value=%v", val)
 		}
-		v.SetFloat(val)
-	case reflect.Float64:
-		val, err := strconv.ParseFloat(strVal, 64)
-		if err != nil {
-			return err
+		if v.OverflowFloat(floatVal) {
+			return fmt.Errorf("float value too big: %f", floatVal)
 		}
-		v.SetFloat(val)
+		v.SetFloat(floatVal)
 	case reflect.String:
+		strVal, ok := val.(string)
+		if !ok {
+			return fmt.Errorf("expect string value, but not: value=%v", val)
+		}
 		v.SetString(strVal)
 	case reflect.Bool:
-		if field.Name == strVal {
-			v.SetBool(true)
-			return nil
+		boolVal, ok := val.(bool)
+		if !ok {
+			return fmt.Errorf("expect bool value, but not: value=%v", val)
 		}
-		val, err := strconv.ParseBool(strVal)
-		if err != nil {
-			return err
-		}
-		v.SetBool(val)
+		v.SetBool(boolVal)
 	default:
 		return errors.New("Unsupported kind: " + v.Kind().String())
 	}
