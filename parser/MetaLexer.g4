@@ -3,6 +3,7 @@ lexer grammar MetaLexer;
 META_QUALIFY_NAME: PLUS(IDENT DOT)*IDENT;
 
 //keyword
+STRING:               STRING_F ~('"')* STRING_F;
 BOOLEAN:              'true'|'false';
 FLOAT:                DIGIT+ DOT DIGIT+;
 INTEGER:              DIGIT+;
@@ -14,8 +15,6 @@ IDENT:                (ALPHA|UNDERSCORE)(ALPHA|DIGIT|UNDERSCORE|'-')*;
 
 // WHITE SPACE
 WS:         [ \t\r\n]+ -> channel(HIDDEN) ;
-
-STRING:               STRING_F ~('\r'|'\n'|':'|'"')* STRING_F;
 
 fragment DIGIT:       [0-9];
 fragment UNDERSCORE:  '_';

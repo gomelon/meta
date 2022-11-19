@@ -33,13 +33,13 @@ var metaparserParserStaticData struct {
 func metaparserParserInit() {
 	staticData := &metaparserParserStaticData
 	staticData.literalNames = []string{
-		"", "", "", "", "", "'//'", "'/*'", "'*/'", "", "", "", "'+'", "'='",
+		"", "", "", "", "", "", "'//'", "'/*'", "'*/'", "", "", "'+'", "'='",
 		"'.'",
 	}
 	staticData.symbolicNames = []string{
-		"", "META_QUALIFY_NAME", "BOOLEAN", "FLOAT", "INTEGER", "LINE_COMMENT",
-		"BLOCK_COMMENT_START", "BLOCK_COMMENT_END", "IDENT", "WS", "STRING",
-		"PLUS", "ASSIGNMENT", "DOT", "ERRCHAR",
+		"", "META_QUALIFY_NAME", "STRING", "BOOLEAN", "FLOAT", "INTEGER", "LINE_COMMENT",
+		"BLOCK_COMMENT_START", "BLOCK_COMMENT_END", "IDENT", "WS", "PLUS", "ASSIGNMENT",
+		"DOT", "ERRCHAR",
 	}
 	staticData.ruleNames = []string{
 		"root", "singleLine", "multipleLine", "metaBody", "metaQualifyName",
@@ -62,19 +62,19 @@ func metaparserParserInit() {
 		0, 0, 0, 22, 70, 1, 0, 0, 0, 24, 72, 1, 0, 0, 0, 26, 74, 1, 0, 0, 0, 28,
 		33, 3, 2, 1, 0, 29, 30, 3, 4, 2, 0, 30, 31, 5, 0, 0, 1, 31, 33, 1, 0, 0,
 		0, 32, 28, 1, 0, 0, 0, 32, 29, 1, 0, 0, 0, 33, 1, 1, 0, 0, 0, 34, 35, 5,
-		5, 0, 0, 35, 36, 3, 6, 3, 0, 36, 3, 1, 0, 0, 0, 37, 38, 5, 6, 0, 0, 38,
-		39, 3, 6, 3, 0, 39, 40, 5, 7, 0, 0, 40, 5, 1, 0, 0, 0, 41, 45, 3, 8, 4,
+		6, 0, 0, 35, 36, 3, 6, 3, 0, 36, 3, 1, 0, 0, 0, 37, 38, 5, 7, 0, 0, 38,
+		39, 3, 6, 3, 0, 39, 40, 5, 8, 0, 0, 40, 5, 1, 0, 0, 0, 41, 45, 3, 8, 4,
 		0, 42, 44, 3, 10, 5, 0, 43, 42, 1, 0, 0, 0, 44, 47, 1, 0, 0, 0, 45, 43,
 		1, 0, 0, 0, 45, 46, 1, 0, 0, 0, 46, 7, 1, 0, 0, 0, 47, 45, 1, 0, 0, 0,
 		48, 49, 5, 1, 0, 0, 49, 9, 1, 0, 0, 0, 50, 53, 3, 12, 6, 0, 51, 53, 3,
 		26, 13, 0, 52, 50, 1, 0, 0, 0, 52, 51, 1, 0, 0, 0, 53, 11, 1, 0, 0, 0,
 		54, 55, 3, 14, 7, 0, 55, 56, 5, 12, 0, 0, 56, 57, 3, 16, 8, 0, 57, 13,
-		1, 0, 0, 0, 58, 59, 5, 8, 0, 0, 59, 15, 1, 0, 0, 0, 60, 65, 3, 18, 9, 0,
+		1, 0, 0, 0, 58, 59, 5, 9, 0, 0, 59, 15, 1, 0, 0, 0, 60, 65, 3, 18, 9, 0,
 		61, 65, 3, 22, 11, 0, 62, 65, 3, 24, 12, 0, 63, 65, 3, 20, 10, 0, 64, 60,
 		1, 0, 0, 0, 64, 61, 1, 0, 0, 0, 64, 62, 1, 0, 0, 0, 64, 63, 1, 0, 0, 0,
-		65, 17, 1, 0, 0, 0, 66, 67, 5, 2, 0, 0, 67, 19, 1, 0, 0, 0, 68, 69, 5,
-		10, 0, 0, 69, 21, 1, 0, 0, 0, 70, 71, 5, 3, 0, 0, 71, 23, 1, 0, 0, 0, 72,
-		73, 5, 4, 0, 0, 73, 25, 1, 0, 0, 0, 74, 75, 3, 14, 7, 0, 75, 27, 1, 0,
+		65, 17, 1, 0, 0, 0, 66, 67, 5, 3, 0, 0, 67, 19, 1, 0, 0, 0, 68, 69, 5,
+		2, 0, 0, 69, 21, 1, 0, 0, 0, 70, 71, 5, 4, 0, 0, 71, 23, 1, 0, 0, 0, 72,
+		73, 5, 5, 0, 0, 73, 25, 1, 0, 0, 0, 74, 75, 3, 14, 7, 0, 75, 27, 1, 0,
 		0, 0, 4, 32, 45, 52, 64,
 	}
 	deserializer := antlr.NewATNDeserializer(nil)
@@ -115,15 +115,15 @@ func NewMetaParser(input antlr.TokenStream) *MetaParser {
 const (
 	MetaParserEOF                 = antlr.TokenEOF
 	MetaParserMETA_QUALIFY_NAME   = 1
-	MetaParserBOOLEAN             = 2
-	MetaParserFLOAT               = 3
-	MetaParserINTEGER             = 4
-	MetaParserLINE_COMMENT        = 5
-	MetaParserBLOCK_COMMENT_START = 6
-	MetaParserBLOCK_COMMENT_END   = 7
-	MetaParserIDENT               = 8
-	MetaParserWS                  = 9
-	MetaParserSTRING              = 10
+	MetaParserSTRING              = 2
+	MetaParserBOOLEAN             = 3
+	MetaParserFLOAT               = 4
+	MetaParserINTEGER             = 5
+	MetaParserLINE_COMMENT        = 6
+	MetaParserBLOCK_COMMENT_START = 7
+	MetaParserBLOCK_COMMENT_END   = 8
+	MetaParserIDENT               = 9
+	MetaParserWS                  = 10
 	MetaParserPLUS                = 11
 	MetaParserASSIGNMENT          = 12
 	MetaParserDOT                 = 13
