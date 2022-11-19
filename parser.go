@@ -1,10 +1,8 @@
 package meta
 
 import (
-	"fmt"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 	"github.com/gomelon/meta/parser"
-	"github.com/google/shlex"
 	"go/token"
 	"go/types"
 	"strconv"
@@ -119,33 +117,11 @@ func (p *Parser) filterComments(pos token.Pos, metaName string) []string {
 	return filteredComments
 }
 
-func (p *Parser) populateMetaFields(metaName, comment string) (parsedMeta *Meta) {
-	antlr.NewInputStream(comment)
-
-	propertiesStr := strings.TrimLeft(comment, metaName)
-	fieldAndValues, err := shlex.Split(propertiesStr)
-	if err != nil {
-		panic(fmt.Errorf("meta parse fail: %w", err))
-	}
-
-	properties := make(map[string]any, len(fieldAndValues))
-	for _, fieldAndValue := range fieldAndValues {
-		parts := strings.SplitN(fieldAndValue, "=", 2)
-		if len(parts) == 1 {
-			properties[fieldAndValue] = fieldAndValue
-		} else {
-			properties[parts[0]] = parts[1]
-		}
-	}
-
-	meta := New(metaName)
-	meta.SetProperties(properties)
-	return meta
-}
-
 func parse(qualifyName, comment string) (*Meta, bool) {
-	if strings.Index(comment, qualifyName) < 1 {
-
+	comment = strings.TrimSpace(comment)
+	//第一个字符为+号
+	if strings.Index(comment, qualifyName) != 1 {
+		return nil, false
 	}
 	is := antlr.NewInputStream(comment)
 	lexer := parser.NewMetaLexer(is)
@@ -173,7 +149,11 @@ func newSpecMetaParserListener(specQualifyName string) *specMetaParserListener {
 }
 
 func (listener *specMetaParserListener) ExitMetaQualifyName(ctx *parser.MetaQualifyNameContext) {
-	qualifyName := ctx.GetText()
+	ctxText := ctx.GetText()
+	if strings.Index(ctxText, "+") != 0 || len(ctxText) <= 1 {
+		return
+	}
+	qualifyName := ctxText[1:]
 	if listener.specQualifyName != qualifyName {
 		return
 	}

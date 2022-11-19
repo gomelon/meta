@@ -48,34 +48,34 @@ func metaparserParserInit() {
 	}
 	staticData.predictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
-		4, 1, 14, 78, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
+		4, 1, 14, 77, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
 		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
 		10, 2, 11, 7, 11, 2, 12, 7, 12, 2, 13, 7, 13, 1, 0, 1, 0, 1, 0, 1, 0, 3,
-		0, 33, 8, 0, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 3, 1, 3, 1, 3,
-		5, 3, 45, 8, 3, 10, 3, 12, 3, 48, 9, 3, 1, 4, 1, 4, 1, 5, 1, 5, 3, 5, 54,
-		8, 5, 1, 6, 1, 6, 1, 6, 1, 6, 1, 7, 1, 7, 1, 8, 1, 8, 1, 8, 1, 8, 3, 8,
-		66, 8, 8, 1, 9, 1, 9, 1, 10, 1, 10, 1, 11, 1, 11, 1, 12, 1, 12, 1, 13,
-		1, 13, 1, 13, 0, 0, 14, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
-		26, 0, 0, 69, 0, 32, 1, 0, 0, 0, 2, 34, 1, 0, 0, 0, 4, 37, 1, 0, 0, 0,
-		6, 41, 1, 0, 0, 0, 8, 49, 1, 0, 0, 0, 10, 53, 1, 0, 0, 0, 12, 55, 1, 0,
-		0, 0, 14, 59, 1, 0, 0, 0, 16, 65, 1, 0, 0, 0, 18, 67, 1, 0, 0, 0, 20, 69,
-		1, 0, 0, 0, 22, 71, 1, 0, 0, 0, 24, 73, 1, 0, 0, 0, 26, 75, 1, 0, 0, 0,
-		28, 33, 3, 2, 1, 0, 29, 30, 3, 4, 2, 0, 30, 31, 5, 0, 0, 1, 31, 33, 1,
-		0, 0, 0, 32, 28, 1, 0, 0, 0, 32, 29, 1, 0, 0, 0, 33, 1, 1, 0, 0, 0, 34,
-		35, 5, 5, 0, 0, 35, 36, 3, 6, 3, 0, 36, 3, 1, 0, 0, 0, 37, 38, 5, 6, 0,
-		0, 38, 39, 3, 6, 3, 0, 39, 40, 5, 7, 0, 0, 40, 5, 1, 0, 0, 0, 41, 42, 5,
-		11, 0, 0, 42, 46, 3, 8, 4, 0, 43, 45, 3, 10, 5, 0, 44, 43, 1, 0, 0, 0,
-		45, 48, 1, 0, 0, 0, 46, 44, 1, 0, 0, 0, 46, 47, 1, 0, 0, 0, 47, 7, 1, 0,
-		0, 0, 48, 46, 1, 0, 0, 0, 49, 50, 5, 1, 0, 0, 50, 9, 1, 0, 0, 0, 51, 54,
-		3, 12, 6, 0, 52, 54, 3, 26, 13, 0, 53, 51, 1, 0, 0, 0, 53, 52, 1, 0, 0,
-		0, 54, 11, 1, 0, 0, 0, 55, 56, 3, 14, 7, 0, 56, 57, 5, 12, 0, 0, 57, 58,
-		3, 16, 8, 0, 58, 13, 1, 0, 0, 0, 59, 60, 5, 8, 0, 0, 60, 15, 1, 0, 0, 0,
-		61, 66, 3, 18, 9, 0, 62, 66, 3, 22, 11, 0, 63, 66, 3, 24, 12, 0, 64, 66,
-		3, 20, 10, 0, 65, 61, 1, 0, 0, 0, 65, 62, 1, 0, 0, 0, 65, 63, 1, 0, 0,
-		0, 65, 64, 1, 0, 0, 0, 66, 17, 1, 0, 0, 0, 67, 68, 5, 2, 0, 0, 68, 19,
-		1, 0, 0, 0, 69, 70, 5, 10, 0, 0, 70, 21, 1, 0, 0, 0, 71, 72, 5, 3, 0, 0,
-		72, 23, 1, 0, 0, 0, 73, 74, 5, 4, 0, 0, 74, 25, 1, 0, 0, 0, 75, 76, 3,
-		14, 7, 0, 76, 27, 1, 0, 0, 0, 4, 32, 46, 53, 65,
+		0, 33, 8, 0, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 3, 1, 3, 5, 3,
+		44, 8, 3, 10, 3, 12, 3, 47, 9, 3, 1, 4, 1, 4, 1, 5, 1, 5, 3, 5, 53, 8,
+		5, 1, 6, 1, 6, 1, 6, 1, 6, 1, 7, 1, 7, 1, 8, 1, 8, 1, 8, 1, 8, 3, 8, 65,
+		8, 8, 1, 9, 1, 9, 1, 10, 1, 10, 1, 11, 1, 11, 1, 12, 1, 12, 1, 13, 1, 13,
+		1, 13, 0, 0, 14, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 0,
+		0, 68, 0, 32, 1, 0, 0, 0, 2, 34, 1, 0, 0, 0, 4, 37, 1, 0, 0, 0, 6, 41,
+		1, 0, 0, 0, 8, 48, 1, 0, 0, 0, 10, 52, 1, 0, 0, 0, 12, 54, 1, 0, 0, 0,
+		14, 58, 1, 0, 0, 0, 16, 64, 1, 0, 0, 0, 18, 66, 1, 0, 0, 0, 20, 68, 1,
+		0, 0, 0, 22, 70, 1, 0, 0, 0, 24, 72, 1, 0, 0, 0, 26, 74, 1, 0, 0, 0, 28,
+		33, 3, 2, 1, 0, 29, 30, 3, 4, 2, 0, 30, 31, 5, 0, 0, 1, 31, 33, 1, 0, 0,
+		0, 32, 28, 1, 0, 0, 0, 32, 29, 1, 0, 0, 0, 33, 1, 1, 0, 0, 0, 34, 35, 5,
+		5, 0, 0, 35, 36, 3, 6, 3, 0, 36, 3, 1, 0, 0, 0, 37, 38, 5, 6, 0, 0, 38,
+		39, 3, 6, 3, 0, 39, 40, 5, 7, 0, 0, 40, 5, 1, 0, 0, 0, 41, 45, 3, 8, 4,
+		0, 42, 44, 3, 10, 5, 0, 43, 42, 1, 0, 0, 0, 44, 47, 1, 0, 0, 0, 45, 43,
+		1, 0, 0, 0, 45, 46, 1, 0, 0, 0, 46, 7, 1, 0, 0, 0, 47, 45, 1, 0, 0, 0,
+		48, 49, 5, 1, 0, 0, 49, 9, 1, 0, 0, 0, 50, 53, 3, 12, 6, 0, 51, 53, 3,
+		26, 13, 0, 52, 50, 1, 0, 0, 0, 52, 51, 1, 0, 0, 0, 53, 11, 1, 0, 0, 0,
+		54, 55, 3, 14, 7, 0, 55, 56, 5, 12, 0, 0, 56, 57, 3, 16, 8, 0, 57, 13,
+		1, 0, 0, 0, 58, 59, 5, 8, 0, 0, 59, 15, 1, 0, 0, 0, 60, 65, 3, 18, 9, 0,
+		61, 65, 3, 22, 11, 0, 62, 65, 3, 24, 12, 0, 63, 65, 3, 20, 10, 0, 64, 60,
+		1, 0, 0, 0, 64, 61, 1, 0, 0, 0, 64, 62, 1, 0, 0, 0, 64, 63, 1, 0, 0, 0,
+		65, 17, 1, 0, 0, 0, 66, 67, 5, 2, 0, 0, 67, 19, 1, 0, 0, 0, 68, 69, 5,
+		10, 0, 0, 69, 21, 1, 0, 0, 0, 70, 71, 5, 3, 0, 0, 71, 23, 1, 0, 0, 0, 72,
+		73, 5, 4, 0, 0, 73, 25, 1, 0, 0, 0, 74, 75, 3, 14, 7, 0, 75, 27, 1, 0,
+		0, 0, 4, 32, 45, 52, 64,
 	}
 	deserializer := antlr.NewATNDeserializer(nil)
 	staticData.atn = deserializer.Deserialize(staticData.serializedATN)
@@ -568,10 +568,6 @@ func NewMetaBodyContext(parser antlr.Parser, parent antlr.ParserRuleContext, inv
 
 func (s *MetaBodyContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *MetaBodyContext) PLUS() antlr.TerminalNode {
-	return s.GetToken(MetaParserPLUS, 0)
-}
-
 func (s *MetaBodyContext) MetaQualifyName() IMetaQualifyNameContext {
 	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
@@ -676,23 +672,19 @@ func (p *MetaParser) MetaBody() (localctx IMetaBodyContext) {
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(41)
-		p.Match(MetaParserPLUS)
-	}
-	{
-		p.SetState(42)
 		p.MetaQualifyName()
 	}
-	p.SetState(46)
+	p.SetState(45)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 	for _la == MetaParserIDENT {
 		{
-			p.SetState(43)
+			p.SetState(42)
 			p.FieldExpr()
 		}
 
-		p.SetState(48)
+		p.SetState(47)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
@@ -787,7 +779,7 @@ func (p *MetaParser) MetaQualifyName() (localctx IMetaQualifyNameContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(49)
+		p.SetState(48)
 		p.Match(MetaParserMETA_QUALIFY_NAME)
 	}
 
@@ -907,20 +899,20 @@ func (p *MetaParser) FieldExpr() (localctx IFieldExprContext) {
 		}
 	}()
 
-	p.SetState(53)
+	p.SetState(52)
 	p.GetErrorHandler().Sync(p)
 	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 2, p.GetParserRuleContext()) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(51)
+			p.SetState(50)
 			p.FieldNameValueExpr()
 		}
 
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(52)
+			p.SetState(51)
 			p.FieldNameExpr()
 		}
 
@@ -1048,15 +1040,15 @@ func (p *MetaParser) FieldNameValueExpr() (localctx IFieldNameValueExprContext) 
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(55)
+		p.SetState(54)
 		p.FieldName()
 	}
 	{
-		p.SetState(56)
+		p.SetState(55)
 		p.Match(MetaParserASSIGNMENT)
 	}
 	{
-		p.SetState(57)
+		p.SetState(56)
 		p.ValueExpr()
 	}
 
@@ -1150,7 +1142,7 @@ func (p *MetaParser) FieldName() (localctx IFieldNameContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(59)
+		p.SetState(58)
 		p.Match(MetaParserIDENT)
 	}
 
@@ -1302,35 +1294,35 @@ func (p *MetaParser) ValueExpr() (localctx IValueExprContext) {
 		}
 	}()
 
-	p.SetState(65)
+	p.SetState(64)
 	p.GetErrorHandler().Sync(p)
 
 	switch p.GetTokenStream().LA(1) {
 	case MetaParserBOOLEAN:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(61)
+			p.SetState(60)
 			p.BoolValue()
 		}
 
 	case MetaParserFLOAT:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(62)
+			p.SetState(61)
 			p.FloatValue()
 		}
 
 	case MetaParserINTEGER:
 		p.EnterOuterAlt(localctx, 3)
 		{
-			p.SetState(63)
+			p.SetState(62)
 			p.IntegerValue()
 		}
 
 	case MetaParserSTRING:
 		p.EnterOuterAlt(localctx, 4)
 		{
-			p.SetState(64)
+			p.SetState(63)
 			p.StrValue()
 		}
 
@@ -1428,7 +1420,7 @@ func (p *MetaParser) BoolValue() (localctx IBoolValueContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(67)
+		p.SetState(66)
 		p.Match(MetaParserBOOLEAN)
 	}
 
@@ -1522,7 +1514,7 @@ func (p *MetaParser) StrValue() (localctx IStrValueContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(69)
+		p.SetState(68)
 		p.Match(MetaParserSTRING)
 	}
 
@@ -1616,7 +1608,7 @@ func (p *MetaParser) FloatValue() (localctx IFloatValueContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(71)
+		p.SetState(70)
 		p.Match(MetaParserFLOAT)
 	}
 
@@ -1710,7 +1702,7 @@ func (p *MetaParser) IntegerValue() (localctx IIntegerValueContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(73)
+		p.SetState(72)
 		p.Match(MetaParserINTEGER)
 	}
 
@@ -1816,7 +1808,7 @@ func (p *MetaParser) FieldNameExpr() (localctx IFieldNameExprContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(75)
+		p.SetState(74)
 		p.FieldName()
 	}
 

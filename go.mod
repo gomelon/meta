@@ -6,7 +6,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10
 	github.com/antonmedv/expr v1.9.0
-	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	golang.org/x/tools v0.1.12
 )
 

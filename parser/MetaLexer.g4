@@ -1,6 +1,6 @@
 lexer grammar MetaLexer;
 
-META_QUALIFY_NAME: (IDENT DOT)+IDENT;
+META_QUALIFY_NAME: PLUS(IDENT DOT)*IDENT;
 
 //keyword
 BOOLEAN:              'true'|'false';

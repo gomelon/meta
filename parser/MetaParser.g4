@@ -15,7 +15,7 @@ multipleLine:
     BLOCK_COMMENT_START metaBody BLOCK_COMMENT_END ;
 
 metaBody:
-    PLUS metaQualifyName fieldExpr*;
+    metaQualifyName fieldExpr*;
 
 metaQualifyName:
     META_QUALIFY_NAME;
